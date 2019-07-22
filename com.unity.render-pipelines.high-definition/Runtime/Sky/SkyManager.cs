@@ -227,10 +227,6 @@ namespace UnityEngine.Rendering.HighDefinition
             {
                 renderer.SetGlobalSkyData(cmd);
             }
-            else
-            {
-                SkyRenderer.SetGlobalNeutralSkyData(cmd);
-            }
         }
 
 #if UNITY_EDITOR
