@@ -299,7 +299,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 }
             }
 
-            if (m_LastPrecomputedBounce == m_Settings.numberOfBounces.value /*&& m_LastPrecomputationFrameIndex < builtinParams.frameIndex*/)
+            if (m_LastPrecomputedBounce == m_Settings.numberOfBounces.value)
             {
                 // Free temp tables.
                 // This is a deferred release (one frame late)!
@@ -319,35 +319,6 @@ namespace UnityEngine.Rendering.HighDefinition
                 // Update the hash for the current bounce.
                 m_LastPrecomputationParamHash = currentParamHash;
 
-                /*
-                // When rendering into a cubemap for environment lighting, if the sky is not realtime, then we need to do all the bounces at once
-                // It's ok in terms of performance because it's only done once (as long as parameters don't change).
-                // However, editing parameters will be very slow.
-                if (builtinParams.updateMode != EnvironmentUpdateMode.Realtime)
-                {
-                    for (int i = m_LastPrecomputedBounce; i < m_Settings.numberOfBounces.value; ++i)
-                    {
-                        PrecomputeTables(cmd);
-                        m_LastPrecomputedBounce++;
-                    }
-
-                    // Update the hash for the current bounce.
-                    m_LastPrecomputationParamHash = currentParamHash;
-                    m_LastPrecomputationFameIndex = builtinParams.frameIndex;
-                }
-                // In case of realtime environment lighting, we need to update only one bounce and only once per frame
-                // (the same sky can be rendered into a cubemap and in the regular view).
-                // Also, we obviously want the precomputation to run at least once.
-                else if ((m_LastPrecomputationFrameIndex < builtinParams.frameIndex) || (m_LastPrecomputedBounce == 0))
-                {
-                    PrecomputeTables(cmd);
-                    m_LastPrecomputedBounce++;
-
-                    // Update the hash for the current bounce.
-                    m_LastPrecomputationParamHash = currentParamHash;
-                    m_LastPrecomputationFrameIndex = builtinParams.frameIndex;
-                }
-                */
                 // If the sky is realtime, an upcoming update will update the sky lighting. Otherwise we need to force an update.
                 return builtinParams.updateMode != EnvironmentUpdateMode.Realtime;
             }
