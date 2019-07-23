@@ -11,8 +11,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Fixed various dependency tracking issues with Sub Graphs and HLSL files from Custom Function Nodes.
 - Fixed an error that previously occurred when you used `Sampler State` input ports on Sub Graphs.
-
-### Fixed
+- `Normal Reconstruct Z` node is now compatible with both fragment and vertex stages. 
+- `Position` node now draws the correct label for **Absolute World**. 
+- Node previews now inherit preview type correctly.
 - Normal maps now unpack correctly for mobile platforms.
 
 ## [7.0.0] - 2019-07-10
