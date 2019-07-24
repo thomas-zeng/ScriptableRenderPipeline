@@ -13,7 +13,7 @@ namespace UnityEngine.Rendering.HighDefinition
         public abstract void Cleanup();
 
         /// <summary>
-        /// Called every frame. Implement it if your SkyRenderer needs to iterate independently from the user defined update frequency (see SkySettings UpdateMode)
+        /// Called every frame exactly once. Implement it if your SkyRenderer needs to iterate independently from the user defined update frequency (see SkySettings UpdateMode)
         /// </summary>
         /// <returns>True if the update determines that sky lighting needs to be re-rendered. False otherwise.</returns>
         public virtual bool Update(BuiltinSkyParameters builtinParams) { return false; }
