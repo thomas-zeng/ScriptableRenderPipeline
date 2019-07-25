@@ -381,9 +381,8 @@ namespace UnityEngine.Rendering.HighDefinition
                     graphicDevice == GraphicsDeviceType.XboxOne ||
                     graphicDevice == GraphicsDeviceType.XboxOneD3D12 ||
                     graphicDevice == GraphicsDeviceType.Metal ||
-                    graphicDevice == GraphicsDeviceType.Vulkan
-                    // Switch isn't supported currently (19.3)
-                    /* || graphicDevice == GraphicsDeviceType.Switch */);
+                    graphicDevice == GraphicsDeviceType.Vulkan ||
+                    graphicDevice == GraphicsDeviceType.Switch);
         }
 
         public static void CheckRTCreated(RenderTexture rt)
