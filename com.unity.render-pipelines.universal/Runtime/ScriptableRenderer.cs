@@ -178,7 +178,7 @@ namespace UnityEngine.Rendering.Universal
         /// </summary>
         /// <param name="context">Use this render context to issue any draw commands during execution.</param>
         /// <param name="renderingData">Current render state information.</param>
-        public void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
+        public void Execute(ScriptableRenderContext context, ref RenderingData renderingData, CommandBuffer cmd)
         {
             Camera camera = renderingData.cameraData.camera;
             ClearRenderState(context);
@@ -228,6 +228,11 @@ namespace UnityEngine.Rendering.Universal
 
             if (stereoEnabled)
                 BeginXRRendering(context, camera);
+
+#if VISUAL_EFFECT_GRAPH_0_0_1_OR_NEWER
+            //Triggers dispatch per camera, all global parameters should have been setup at this stage.
+            VFX.VFXManager.ProcessCameraCommand(camera, cmd);
+#endif
 
             // In this block main rendering executes.
             ExecuteBlock(RenderPassBlock.MainRendering, blockRanges, context, ref renderingData);

@@ -201,8 +201,7 @@ namespace UnityEngine.Rendering.Universal
                 InitializeRenderingData(settings, ref cameraData, ref cullResults, out var renderingData);
 
                 renderer.Setup(context, ref renderingData);
-                ProcessPerCameraAfterCulling(cameraData, cmd);
-                renderer.Execute(context, ref renderingData);
+                renderer.Execute(context, ref renderingData, cmd);
             }
 
             context.ExecuteCommandBuffer(cmd);
@@ -534,14 +533,6 @@ namespace UnityEngine.Rendering.Universal
             Matrix4x4 viewProjMatrix = projMatrix * viewMatrix;
             Matrix4x4 invViewProjMatrix = Matrix4x4.Inverse(viewProjMatrix);
             Shader.SetGlobalMatrix(PerCameraBuffer._InvCameraViewProj, invViewProjMatrix);
-        }
-
-        static void ProcessPerCameraAfterCulling(CameraData cameraData, CommandBuffer cmd)
-        {
-#if VISUAL_EFFECT_GRAPH_0_0_1_OR_NEWER
-            //Triggers dispatch per camera, all global parameters should have been setup at this stage.
-            VFX.VFXManager.ProcessCameraCommand(cameraData.camera, cmd);
-#endif
         }
 
         static Lightmapping.RequestLightsDelegate lightsDelegate = (Light[] requests, NativeArray<LightDataGI> lightsOutput) =>
