@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using System.Reflection;
 using System.Linq;
+using UnityEditor.Graphs;
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
@@ -466,9 +467,17 @@ namespace UnityEditor.ShaderGraph.Drawing
 
                 evt.menu.AppendAction("Fit To Text", OnFitToText, e => DropdownMenuAction.Status.Normal);
                 evt.menu.AppendSeparator();
+                
+                evt.menu.AppendAction("Delete",  OnDestroy, e => DropdownMenuAction.Status.Normal);
+                evt.menu.AppendSeparator();
             }
         }
 
+        void OnDestroy(DropdownMenuAction menuAction)
+        {
+            m_Graph.RemoveStickyNote(userData);
+        }
+        
         void OnTitleChange(EventBase e)
         {
             //m_Graph.owner.RegisterCompleteObjectUndo("Title Changed");
