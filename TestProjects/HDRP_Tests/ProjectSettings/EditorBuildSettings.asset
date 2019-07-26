@@ -14,7 +14,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/GraphicTests/Scenes/1x_Materials/1103_Unlit_Distortion_DepthTest.unity
     guid: 27d04b0368c7fef4eb423d76cc0e48dc
-  - enabled: 1
+  - enabled: 0
     path: Assets/GraphicTests/Scenes/1x_Materials/1104_Unlit_Distortion_Compose.unity
     guid: 27ed1a76ceb6cae4b90978787b4197ab
   - enabled: 1
@@ -227,7 +227,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/GraphicTests/Scenes/2x_Lighting/2306_Contact_Shadow_SpotLight.unity
     guid: a8ecf1e3cee864a48bd6bca2c797fdb3
-  - enabled: 1
+  - enabled: 0
     path: Assets/GraphicTests/Scenes/2x_Lighting/2307_Shadow_VeryHigh.unity
     guid: c110cc3f909bb664b82eb554f0494597
   - enabled: 1
@@ -287,7 +287,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/GraphicTests/Scenes/4x_PostProcessing/4011_MotionBlur_PerObject.unity
     guid: bfedb7e76d6153a4896b9d61a8d826af
-  - enabled: 1
+  - enabled: 0
     path: Assets/GraphicTests/Scenes/4x_PostProcessing/4012_MotionBlur_CameraOnly.unity
     guid: faeb14f82af77cc4fb9c88233f3c9a53
   - enabled: 1
@@ -380,13 +380,13 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/GraphicTests/Scenes/8x_ShaderGraph/8204_CustomSpecOcclusion.unity
     guid: ea4b63b16805d5d40a81ed8842d96847
-  - enabled: 1
+  - enabled: 0
     path: Assets/GraphicTests/Scenes/8x_ShaderGraph/8205_SceneDepthColorNodes.unity
     guid: 17a399a27d6d4504cb53093dcadfe715
-  - enabled: 1
+  - enabled: 0
     path: Assets/GraphicTests/Scenes/9x_Other/9001_LODTransition.unity
     guid: b15315a1f9287fa4dac965a039b3b778
-  - enabled: 1
+  - enabled: 0
     path: Assets/GraphicTests/Scenes/9x_Other/9002_FrameSettings_LOD.unity
     guid: b4995887c0a7322428c31a1e7778754b
   - enabled: 1
@@ -434,7 +434,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/GraphicTests/Scenes/9x_Other/9302_MotionVectorsOn-DefferedDecal-Static.unity
     guid: aa2b8ed7d0d276340b794c91ebc7cdce
-  - enabled: 1
+  - enabled: 0
     path: Assets/GraphicTests/Scenes/9x_Other/9401_MSAAForwardOnly.unity
     guid: b8bed8c61a04a644f87582e26e3596f2
   - enabled: 1
@@ -443,16 +443,4 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/GraphicTests/Scenes/9x_Other/9500_LightScripting.unity
     guid: 134ab13db8156a14891996196de4cf63
-  - enabled: 1
-    path: Assets/GraphicTests/Scenes/9x_Other/9601_SkinnedMeshBatching-Off.unity
-    guid: d0d3270af482d2349baf7fc2a1dc7d4f
-  - enabled: 1
-    path: Assets/GraphicTests/Scenes/9x_Other/9602_SkinnedMeshBatching-On.unity
-    guid: 78446c36daacd444c8a07b5671274a51
-  - enabled: 1
-    path: Assets/GraphicTests/Scenes/9x_Other/9603_MeshRendererBatching-Off.unity
-    guid: 7edc6301457ff2c41a22f11ed10a9aee
-  - enabled: 1
-    path: Assets/GraphicTests/Scenes/9x_Other/9604_MeshRendererBatching-On.unity
-    guid: 0dcef9d74b6e30247bf7390c1da4abe5
   m_configObjects: {}
