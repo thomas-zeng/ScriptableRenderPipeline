@@ -9,6 +9,9 @@ namespace UnityEditor.Rendering.HighDefinition
     [FormerName("UnityEditor.Experimental.Rendering.HDPipeline.HDLitSubShader")]
     class HDLitSubShader : IHDLitSubShader
     {
+        static string DefineRaytracingKeyword(RayTracingNode.RaytracingVariant variant)
+            => $"#define {RayTracingNode.RaytracingVariantKeyword(variant)}";
+
         Pass m_PassGBuffer = new Pass()
         {
             Name = "GBuffer",
@@ -597,7 +600,7 @@ namespace UnityEditor.Rendering.HighDefinition
                 "#pragma multi_compile _ DIFFUSE_LIGHTING_ONLY",
                 "#define SHADOW_LOW",
                 "#define SKIP_RASTERIZED_SHADOWS",
-                "#define RAYTRACING_SHADER_GRAPH_ON",
+                DefineRaytracingKeyword(RayTracingNode.RaytracingVariant.Low)
             },
             Includes = new List<string>()
             {
@@ -646,7 +649,7 @@ namespace UnityEditor.Rendering.HighDefinition
             ShaderPassName = "SHADERPASS_RAYTRACING_VISIBILITY",
             ExtraDefines = new List<string>()
             {
-                "#define RAYTRACING_SHADER_GRAPH_ON",
+                DefineRaytracingKeyword(RayTracingNode.RaytracingVariant.Low)
             },
             Includes = new List<string>()
             {
@@ -700,7 +703,7 @@ namespace UnityEditor.Rendering.HighDefinition
                 "#pragma multi_compile _ DYNAMICLIGHTMAP_ON",
                 "#define SHADOW_LOW",
                 "#define SKIP_RASTERIZED_SHADOWS",
-                "#define RAYTRACING_SHADER_GRAPH_ON",
+                DefineRaytracingKeyword(RayTracingNode.RaytracingVariant.High)
             },
             Includes = new List<string>()
             {
@@ -753,7 +756,7 @@ namespace UnityEditor.Rendering.HighDefinition
                 "#pragma multi_compile _ DIRLIGHTMAP_COMBINED",
                 "#pragma multi_compile _ DYNAMICLIGHTMAP_ON",
                 "#define SHADOW_LOW",
-                "#define RAYTRACING_SHADER_GRAPH_ON",
+                DefineRaytracingKeyword(RayTracingNode.RaytracingVariant.High)
             },
             Includes = new List<string>()
             {
