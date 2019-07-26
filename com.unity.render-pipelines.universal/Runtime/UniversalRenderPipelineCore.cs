@@ -148,7 +148,7 @@ namespace UnityEngine.Rendering.Universal
         }
 
         static RenderTextureDescriptor CreateRenderTextureDescriptor(Camera camera, float renderScale,
-            bool isStereoEnabled, bool isHdrEnabled, int msaaSamples)
+            bool isStereoEnabled, bool isHdrEnabled, int msaaSamples, bool needsAlpha)
         {
             RenderTextureDescriptor desc;
             RenderTextureFormat renderTextureFormatDefault = RenderTextureFormat.Default;
@@ -165,9 +165,9 @@ namespace UnityEngine.Rendering.Universal
                 desc.height = (int)((float)desc.height * renderScale);
             }
 
-            // TODO: when preserve framebuffer alpha is enabled we can't use RGB111110Float format.
-            bool useRGB111110 = Application.isMobilePlatform && RenderingUtils.SupportsRenderTextureFormat(RenderTextureFormat.RGB111110Float);
-            RenderTextureFormat hdrFormat = (useRGB111110) ? RenderTextureFormat.RGB111110Float : RenderTextureFormat.DefaultHDR;
+            RenderTextureFormat rt32BitHDR = needsAlpha ? RenderTextureFormat.ARGB2101010 : RenderTextureFormat.RGB111110Float;
+            bool use32BitHDR = Application.isMobilePlatform && RenderingUtils.SupportsRenderTextureFormat(rt32BitHDR);
+            RenderTextureFormat hdrFormat = (use32BitHDR) ? rt32BitHDR : RenderTextureFormat.DefaultHDR;
             desc.colorFormat = isHdrEnabled ? hdrFormat : renderTextureFormatDefault;
             desc.depthBufferBits = 32;
             desc.enableRandomWrite = false;
