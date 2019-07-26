@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1d83e9df4a9b69b43ad206daac077207, type: 3}
   m_Name: HDRenderPipelineRayTracingResources
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   reflectionRaytracingRT: {fileID: 4807578003741378534, guid: 1a500e5079fba734aa90fe92e70ea131,
     type: 3}
   reflectionRaytracingCS: {fileID: 7200000, guid: 591207652a75a4844a89c0b9f45a61f2,

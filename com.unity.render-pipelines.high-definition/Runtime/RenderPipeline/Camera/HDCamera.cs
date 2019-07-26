@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.Experimental.Rendering.RenderGraphModule;
 
 namespace UnityEngine.Rendering.HighDefinition
 {
@@ -436,6 +437,33 @@ namespace UnityEngine.Rendering.HighDefinition
             }
 
             xrViewConstantsGpu.SetData(xrViewConstants);
+
+            // Update frustum and projection parameters
+            {
+                var projMatrix = mainViewConstants.projMatrix;
+                var invProjMatrix = mainViewConstants.invProjMatrix;
+                var viewProjMatrix = mainViewConstants.viewProjMatrix;
+
+                if (xr.enabled)
+                {
+                    var combinedProjMatrix = xr.cullingParams.stereoProjectionMatrix;
+                    var combinedViewMatrix = xr.cullingParams.stereoViewMatrix;
+
+                    if (ShaderConfig.s_CameraRelativeRendering != 0)
+                    {
+                        var combinedOrigin = combinedViewMatrix.inverse.GetColumn(3) - (Vector4)(camera.transform.position);
+                        combinedViewMatrix.SetColumn(3, combinedOrigin);
+                    }
+
+                    projMatrix = combinedProjMatrix;
+                    invProjMatrix = projMatrix.inverse;
+                    viewProjMatrix = projMatrix * combinedViewMatrix;
+                }
+
+                UpdateFrustum(projMatrix, invProjMatrix, viewProjMatrix);
+            }
+
+            m_RecorderCaptureActions = CameraCaptureBridge.GetCaptureActions(camera);
         }
 
         void UpdateViewConstants(ref ViewConstants viewConstants, Matrix4x4 projMatrix, Matrix4x4 viewMatrix, Vector3 cameraPosition, bool jitterProjectionMatrix, bool updatePreviousFrameConstants)
@@ -503,17 +531,19 @@ namespace UnityEngine.Rendering.HighDefinition
                 noTransViewMatrix.SetColumn(3, new Vector4(0, 0, 0, 1));
                 viewConstants.prevViewProjMatrixNoCameraTrans = gpuNonJitteredProj * noTransViewMatrix;
             }
+        }
 
-            // XRTODO: figure out if the following variables must be in ViewConstants
+        void UpdateFrustum(Matrix4x4 projMatrix, Matrix4x4 invProjMatrix, Matrix4x4 viewProjMatrix)
+        {
             float n = camera.nearClipPlane;
             float f = camera.farClipPlane;
 
             // Analyze the projection matrix.
             // p[2][3] = (reverseZ ? 1 : -1) * (depth_0_1 ? 1 : 2) * (f * n) / (f - n)
-            float scale     = viewConstants.projMatrix[2, 3] / (f * n) * (f - n);
+            float scale     = projMatrix[2, 3] / (f * n) * (f - n);
             bool  depth_0_1 = Mathf.Abs(scale) < 1.5f;
             bool  reverseZ  = scale > 0;
-            bool  flipProj  = viewConstants.invProjMatrix.MultiplyPoint(new Vector3(0, 1, 0)).y < 0;
+            bool  flipProj  = invProjMatrix.MultiplyPoint(new Vector3(0, 1, 0)).y < 0;
 
             // http://www.humus.name/temp/Linearize%20depth.txt
             if (reverseZ)
@@ -531,15 +561,13 @@ namespace UnityEngine.Rendering.HighDefinition
             float orthoWidth  = orthoHeight * camera.aspect;
             unity_OrthoParams = new Vector4(orthoWidth, orthoHeight, 0, camera.orthographic ? 1 : 0);
 
-            Frustum.Create(frustum, viewConstants.viewProjMatrix, depth_0_1, reverseZ);
+            Frustum.Create(frustum, viewProjMatrix, depth_0_1, reverseZ);
 
             // Left, right, top, bottom, near, far.
             for (int i = 0; i < 6; i++)
             {
                 frustumPlaneEquations[i] = new Vector4(frustum.planes[i].normal.x, frustum.planes[i].normal.y, frustum.planes[i].normal.z, frustum.planes[i].distance);
             }
-
-            m_RecorderCaptureActions = CameraCaptureBridge.GetCaptureActions(camera);
         }
 
         void UpdateVolumeParameters()
@@ -865,7 +893,7 @@ namespace UnityEngine.Rendering.HighDefinition
             m_HistoryRTSystem.ReleaseAll();
         }
 
-        public void ExecuteCaptureActions(RTHandle input, CommandBuffer cmd)
+        internal void ExecuteCaptureActions(RTHandle input, CommandBuffer cmd)
         {
             if (m_RecorderCaptureActions == null || !m_RecorderCaptureActions.MoveNext())
                 return;
@@ -887,6 +915,50 @@ namespace UnityEngine.Rendering.HighDefinition
 
             for (m_RecorderCaptureActions.Reset(); m_RecorderCaptureActions.MoveNext();)
                 m_RecorderCaptureActions.Current(m_RecorderTempRT, cmd);
+        }
+
+        class ExecuteCaptureActionsPassData
+        {
+            public RenderGraphResource input;
+            public RenderGraphMutableResource tempTexture;
+            public IEnumerator<Action<RenderTargetIdentifier, CommandBuffer>> recorderCaptureActions;
+            public Vector2 viewportScale;
+            public Material blitMaterial;
+        }
+
+        internal void ExecuteCaptureActions(RenderGraph renderGraph, RenderGraphResource input)
+        {
+            if (m_RecorderCaptureActions == null || !m_RecorderCaptureActions.MoveNext())
+                return;
+
+            using (var builder = renderGraph.AddRenderPass<ExecuteCaptureActionsPassData>("Execute Capture Actions", out var passData))
+            {
+                var inputDesc = renderGraph.GetTextureDesc(input);
+                var rtHandleScale = renderGraph.rtHandleProperties.rtHandleScale;
+                passData.viewportScale = new Vector2(rtHandleScale.x, rtHandleScale.y);
+                passData.blitMaterial = HDUtils.GetBlitMaterial(inputDesc.dimension);
+                passData.recorderCaptureActions = m_RecorderCaptureActions;
+                passData.input = builder.ReadTexture(input);
+                // We need to blit to an intermediate texture because input resolution can be bigger than the camera resolution
+                // Since recorder does not know about this, we need to send a texture of the right size.
+                passData.tempTexture = builder.WriteTexture(renderGraph.CreateTexture(new TextureDesc(actualWidth, actualHeight)
+                    { colorFormat = inputDesc.colorFormat, name = "TempCaptureActions" }));
+
+                builder.SetRenderFunc(
+                (ExecuteCaptureActionsPassData data, RenderGraphContext ctx) =>
+                {
+                    var tempRT = ctx.resources.GetTexture(data.tempTexture);
+                    var mpb = ctx.renderGraphPool.GetTempMaterialPropertyBlock();
+                    mpb.SetTexture(HDShaderIDs._BlitTexture, ctx.resources.GetTexture(data.input));
+                    mpb.SetVector(HDShaderIDs._BlitScaleBias, data.viewportScale);
+                    mpb.SetFloat(HDShaderIDs._BlitMipLevel, 0);
+                    ctx.cmd.SetRenderTarget(tempRT);
+                    ctx.cmd.DrawProcedural(Matrix4x4.identity, data.blitMaterial, 0, MeshTopology.Triangles, 3, 1, mpb);
+
+                    for (data.recorderCaptureActions.Reset(); data.recorderCaptureActions.MoveNext();)
+                        data.recorderCaptureActions.Current(tempRT, ctx.cmd);
+                });
+            }
         }
     }
 }

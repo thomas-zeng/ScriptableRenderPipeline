@@ -1194,6 +1194,10 @@ namespace UnityEngine.Rendering.HighDefinition
 
                     // Select render target
                     RenderTargetIdentifier targetId = camera.targetTexture ?? new RenderTargetIdentifier(BuiltinRenderTextureType.CameraTarget);
+                    if (camera.targetTexture != null)
+                    {
+                        camera.targetTexture.IncrementUpdateCount(); // Necessary if the texture is used as a cookie.
+                    }
 
                     // Render directly to XR render target if active
                     if (hdCamera.xr.enabled && hdCamera.xr.renderTargetValid)
@@ -1737,15 +1741,22 @@ namespace UnityEngine.Rendering.HighDefinition
 
             if (m_RenderGraph.enabled)
             {
-                ExecuteWithRenderGraph(renderRequest, renderContext, cmd);
+                ExecuteWithRenderGraph(renderRequest, aovRequest, aovBuffers, renderContext, cmd);
                 return;
             }
 
             ClearBuffers(hdCamera, cmd);
 
+            // Render XR occlusion mesh to depth buffer early in the frame to improve performance
+            // XRTODO: add frame setting for occlusion mesh
+            if (hdCamera.xr.enabled)
+            {
+                var msaa = hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA);
+                var colorBuffer = msaa ? m_CameraColorMSAABuffer : m_CameraColorBuffer;
+                var depthBuffer = m_SharedRTManager.GetDepthStencilBuffer(msaa);
+                hdCamera.xr.RenderOcclusionMeshes(cmd, colorBuffer, depthBuffer);
+            }
 
-            // Render XR occlusion mesh first to improve performance
-            hdCamera.xr.RenderOcclusionMeshes(cmd, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)));
             hdCamera.xr.StartSinglePass(cmd, camera, renderContext);
 
             bool shouldRenderMotionVectorAfterGBuffer = RenderDepthPrepass(cullingResults, hdCamera, renderContext, cmd);
@@ -2349,13 +2360,12 @@ namespace UnityEngine.Rendering.HighDefinition
 
             if (hdCamera.xr.enabled)
             {
-                if (!m_XRSystem.GetCullingParameters(camera, hdCamera.xr, out cullingParams))
-                    return false;
+                cullingParams = hdCamera.xr.cullingParams;
             }
             else
             {
                 if (!camera.TryGetCullingParameters(camera.stereoEnabled, out cullingParams))
-                return false;
+                    return false;
             }
 
             if (m_DebugDisplaySettings.IsCameraFreezeEnabled())
@@ -3415,9 +3425,9 @@ namespace UnityEngine.Rendering.HighDefinition
                 cmd.SetComputeIntParam(cs, HDShaderIDs._SsrDepthPyramidMaxMip, parameters.depthPyramidMipCount - 1);
                 cmd.SetComputeFloatParam(cs, HDShaderIDs._SsrEdgeFadeRcpLength, parameters.edgeFadeRcpLength);
                 cmd.SetComputeIntParam(cs, HDShaderIDs._SsrReflectsSky, parameters.reflectSky ? 1 : 0);
-                    cmd.SetComputeIntParam(  cs, HDShaderIDs._SsrStencilExclusionValue,          (int)StencilBitMask.DoesntReceiveSSR);
+                cmd.SetComputeIntParam(cs, HDShaderIDs._SsrStencilExclusionValue, (int)StencilBitMask.DoesntReceiveSSR);
 
-                    // cmd.SetComputeTextureParam(cs, kernel, "_SsrDebugTexture",    m_SsrDebugTexture);
+                // cmd.SetComputeTextureParam(cs, kernel, "_SsrDebugTexture",    m_SsrDebugTexture);
                 cmd.SetComputeTextureParam(cs, parameters.tracingKernel, HDShaderIDs._CameraDepthTexture, depthPyramid);
                 cmd.SetComputeTextureParam(cs, parameters.tracingKernel, HDShaderIDs._SsrClearCoatMaskTexture, clearCoatMask);
                 cmd.SetComputeTextureParam(cs, parameters.tracingKernel, HDShaderIDs._SsrHitPointTexture, SsrHitPointTexture);
@@ -3426,10 +3436,10 @@ namespace UnityEngine.Rendering.HighDefinition
                 cmd.SetComputeBufferParam(cs, parameters.tracingKernel, HDShaderIDs._DepthPyramidMipLevelOffsets, parameters.offsetBufferData);
 
                 cmd.DispatchCompute(cs, parameters.tracingKernel, HDUtils.DivRoundUp(parameters.width, 8), HDUtils.DivRoundUp(parameters.height, 8), parameters.viewCount);
-                }
+            }
 
-                using (new ProfilingSample(cmd, "SSR - Reprojection", CustomSamplerId.SsrReprojection.GetSampler()))
-                {
+            using (new ProfilingSample(cmd, "SSR - Reprojection", CustomSamplerId.SsrReprojection.GetSampler()))
+            {
                 // cmd.SetComputeTextureParam(cs, kernel, "_SsrDebugTexture",    m_SsrDebugTexture);
                 cmd.SetComputeTextureParam(cs, parameters.reprojectionKernel, HDShaderIDs._SsrHitPointTexture, SsrHitPointTexture);
                 cmd.SetComputeTextureParam(cs, parameters.reprojectionKernel, HDShaderIDs._SsrLightingTextureRW, ssrLightingTexture);
