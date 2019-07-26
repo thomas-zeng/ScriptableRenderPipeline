@@ -1,7 +1,7 @@
 // We need a noise texture for sampling
-Texture2D<float2>                       _OwenScrambledRGTexture;
-Texture2D<float>                        _OwenScrambledTexture;
-Texture2D<float4>                       _ScramblingTexture;
+Texture2D<float2> _OwenScrambledRGTexture;
+Texture2D<float>  _OwenScrambledTexture;
+Texture2D<float4> _ScramblingTexture;
 
 uint2 ScramblingValue(uint i, uint j)
 {
@@ -28,6 +28,9 @@ float2 GetRaytracingNoiseSampleRG(uint sampleIndex, uint2 scramblingValue)
 
 float GetRaytracingNoiseSample(uint sampleIndex, uint sampleDimension, uint scramblingValue)
 {
+    // If we go past the stored number of samples per dim, just pick another pair of dimensions
+    sampleDimension += (sampleIndex / 256) * 2;
+
     // Make sure arguments are in the right range
     sampleIndex = sampleIndex % 256;
     sampleDimension = sampleDimension % 256;
