@@ -475,6 +475,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void OnDestroy(DropdownMenuAction menuAction)
         {
+            m_Graph.owner.RegisterCompleteObjectUndo("Delete Sticky Note");
             m_Graph.RemoveStickyNote(userData);
         }
         
