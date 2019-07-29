@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000000, guid: d14768bd6a3428d4cb8a21def0803fc0,
+  m_LightingDataAsset: {fileID: 112000000, guid: c610c45c051c5f142a4f3a8cb27c2d69,
     type: 2}
   m_UseShadowmask: 1
 --- !u!196 &4
@@ -344,7 +344,7 @@ MonoBehaviour:
   m_SpotLightShape: 1
   m_ShapeWidth: 0.5
   m_ShapeHeight: 0.5
-  m_AspectRatio: 0.8
+  m_AspectRatio: 1
   m_ShapeRadius: 0
   m_UseCustomSpotLightShadowCone: 0
   m_CustomSpotLightShadowCone: 1
@@ -422,7 +422,7 @@ Light:
     m_NormalBias: 0.4
     m_NearPlane: 0.2
     m_CullingMatrixOverride:
-      e00: 0.72168773
+      e00: 0.5773502
       e01: 0
       e02: 0
       e03: 0
@@ -633,7 +633,7 @@ MonoBehaviour:
   m_ShadowFadeDistance: 90
   m_ContactShadows: 0
   m_ShadowTint: {r: 0, g: 0, b: 0, a: 1}
-  m_NormalBias: 0.75
+  m_NormalBias: 3.83
   m_ConstantBias: 0.15
   m_ShadowUpdateMode: 0
   m_ShadowCascadeRatios:
@@ -651,7 +651,7 @@ MonoBehaviour:
   useOldInspector: 0
   useVolumetric: 1
   featuresFoldout: 1
-  showAdditionalSettings: 1
+  showAdditionalSettings: 9
 --- !u!108 &148838136
 Light:
   m_ObjectHideFlags: 0
@@ -1813,7 +1813,7 @@ MonoBehaviour:
   m_SpotLightShape: 1
   m_ShapeWidth: 0.5
   m_ShapeHeight: 0.5
-  m_AspectRatio: 0.8
+  m_AspectRatio: 1
   m_ShapeRadius: 0
   m_UseCustomSpotLightShadowCone: 0
   m_CustomSpotLightShadowCone: 1
@@ -1891,7 +1891,7 @@ Light:
     m_NormalBias: 0.4
     m_NearPlane: 0.2
     m_CullingMatrixOverride:
-      e00: 0.72168773
+      e00: 0.5773502
       e01: 0
       e02: 0
       e03: 0
@@ -3762,7 +3762,7 @@ MonoBehaviour:
   m_ShadowFadeDistance: 150
   m_ContactShadows: 0
   m_ShadowTint: {r: 0, g: 0, b: 0, a: 1}
-  m_NormalBias: 0.75
+  m_NormalBias: 3.83
   m_ConstantBias: 0.15
   m_ShadowUpdateMode: 0
   m_ShadowCascadeRatios:
@@ -3780,7 +3780,7 @@ MonoBehaviour:
   useOldInspector: 0
   useVolumetric: 1
   featuresFoldout: 1
-  showAdditionalSettings: 1
+  showAdditionalSettings: 9
 --- !u!108 &2139042305
 Light:
   m_ObjectHideFlags: 0

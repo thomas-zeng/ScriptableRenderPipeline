@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000000, guid: 2b9f2abca66ad9a4082bfe1f6480a1a0,
+  m_LightingDataAsset: {fileID: 112000000, guid: efc96309f42bad74bbe516dba0430e22,
     type: 2}
   m_UseShadowmask: 1
 --- !u!196 &4
@@ -603,7 +603,7 @@ TextMesh:
 
     Outter angle:
 
-    175'
+    75'
   m_OffsetZ: 0
   m_CharacterSize: 1
   m_LineSpacing: 1
@@ -1324,10 +1324,10 @@ MonoBehaviour:
   m_SpotLightShape: 1
   m_ShapeWidth: 0.5
   m_ShapeHeight: 0.5
-  m_AspectRatio: 0.8
+  m_AspectRatio: 1
   m_ShapeRadius: 0
   m_UseCustomSpotLightShadowCone: 0
-  m_CustomSpotLightShadowCone: 75
+  m_CustomSpotLightShadowCone: 7
   m_MaxSmoothness: 1
   m_ApplyRangeAttenuation: 1
   m_DisplayAreaLightEmissiveMesh: 0
@@ -1390,7 +1390,7 @@ Light:
   m_Color: {r: 1, g: 0.61674535, b: 0.1273585, a: 1}
   m_Intensity: 278.52115
   m_Range: 45
-  m_SpotAngle: 175
+  m_SpotAngle: 75
   m_InnerSpotAngle: 1
   m_CookieSize: 10
   m_Shadows:
@@ -1402,12 +1402,12 @@ Light:
     m_NormalBias: 0.4
     m_NearPlane: 0.2
     m_CullingMatrixOverride:
-      e00: 0.054576114
+      e00: 1.3032253
       e01: 0
       e02: 0
       e03: 0
       e10: 0
-      e11: 0.04366089
+      e11: 1.3032253
       e12: 0
       e13: 0
       e20: 0
@@ -1427,7 +1427,7 @@ Light:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingLayerMask: 1
-  m_Lightmapping: 1
+  m_Lightmapping: 4
   m_LightShadowCasterMode: 1
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 0
@@ -1817,7 +1817,7 @@ MonoBehaviour:
   m_SpotLightShape: 1
   m_ShapeWidth: 0.5
   m_ShapeHeight: 0.5
-  m_AspectRatio: 0.8
+  m_AspectRatio: 1
   m_ShapeRadius: 0
   m_UseCustomSpotLightShadowCone: 1
   m_CustomSpotLightShadowCone: 75
@@ -1895,7 +1895,7 @@ Light:
     m_NormalBias: 0.4
     m_NearPlane: 0.2
     m_CullingMatrixOverride:
-      e00: 0.054576114
+      e00: 0.04366089
       e01: 0
       e02: 0
       e03: 0
@@ -1920,7 +1920,7 @@ Light:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingLayerMask: 1
-  m_Lightmapping: 1
+  m_Lightmapping: 4
   m_LightShadowCasterMode: 1
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 0
@@ -3543,7 +3543,7 @@ TextMesh:
 
     Outter angle:
 
-    175'
+    75'
   m_OffsetZ: 0
   m_CharacterSize: 1
   m_LineSpacing: 1
