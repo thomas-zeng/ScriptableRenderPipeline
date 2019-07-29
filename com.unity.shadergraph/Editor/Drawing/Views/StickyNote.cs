@@ -2,9 +2,6 @@ using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
-using System.Reflection;
-using System.Linq;
-using UnityEditor.Graphs;
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
@@ -468,12 +465,12 @@ namespace UnityEditor.ShaderGraph.Drawing
                 evt.menu.AppendAction("Fit To Text", OnFitToText, e => DropdownMenuAction.Status.Normal);
                 evt.menu.AppendSeparator();
                 
-                evt.menu.AppendAction("Delete",  OnDestroy, e => DropdownMenuAction.Status.Normal);
+                evt.menu.AppendAction("Delete",  OnDelete, e => DropdownMenuAction.Status.Normal);
                 evt.menu.AppendSeparator();
             }
         }
 
-        void OnDestroy(DropdownMenuAction menuAction)
+        void OnDelete(DropdownMenuAction menuAction)
         {
             m_Graph.owner.RegisterCompleteObjectUndo("Delete Sticky Note");
             m_Graph.RemoveStickyNote(userData);
