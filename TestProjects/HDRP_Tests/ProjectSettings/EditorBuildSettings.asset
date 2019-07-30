@@ -443,4 +443,13 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/GraphicTests/Scenes/9x_Other/9500_LightScripting.unity
     guid: 134ab13db8156a14891996196de4cf63
+  - enabled: 1
+    path: Assets/GraphicTests/Scenes/2x_Lighting/2309_Shadow_Mask_Spotlight_Shapes.unity
+    guid: efc4efff9de47fb4ea4ae211bb2fa88c
+  - enabled: 1
+    path: Assets/GraphicTests/Scenes/2x_Lighting/2310_Shadow_Mask_Spotlight_InnerAngle.unity
+    guid: 5a74cb2fec122004297708edd2dc6d37
+  - enabled: 1
+    path: Assets/GraphicTests/Scenes/2x_Lighting/2311_Shadow_CustonAngle.unity
+    guid: c66008a4ccae9374cb8119290adadde0
   m_configObjects: {}
