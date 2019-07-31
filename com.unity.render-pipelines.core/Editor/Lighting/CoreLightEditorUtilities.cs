@@ -20,7 +20,7 @@ namespace UnityEditor.Rendering
         public static void DrawPointLightWireFrameWithLabels(Light light)
         {
             float range = light.range;
-            // Default Color for outer cone will be Yellow if nothing has been provided.
+
             Color outerColor = GetLightAboveObjectWireframeColor(light.color);
             using (new Handles.DrawingScope(outerColor))
             {
@@ -48,12 +48,10 @@ namespace UnityEditor.Rendering
             /////////////////////////////////////////////////////
         }
 
-        static bool m_ShowAreaRange = false;
-        static bool m_ShowAreaWidthHeight = false;
         public static void DrawAreaLightWireFrameWithLabels(Light light)
         {
             Vector2 size = light.areaSize;
-            // Default Color for outer cone will be Yellow if nothing has been provided.
+
             Color outerColor = GetLightAboveObjectWireframeColor(light.color);
             using (new Handles.DrawingScope(outerColor))
             {
@@ -63,88 +61,28 @@ namespace UnityEditor.Rendering
                 {
                     Undo.RecordObject(light, "Adjust Area Light");
                     m_HandleHotControl = GUIUtility.hotControl;
-                    m_ShowAreaRange = true;
-                    m_ShowAreaWidthHeight = true;
                     light.areaSize = size;
                 }
             }
 
-
-
             // Adding label /////////////////////////////////////
-            Vector3 rangePosition = (Vector3.forward * light.range);
             Vector3 labelPosition = Vector3.zero;
 
-            // Draw Center Handle and Line
-            //float range = light.range;
-            //EditorGUI.BeginChangeCheck();
-
-            // Draw line for the range and draw the end of the range with a disc
+            // Draw Center Line
             using (new Handles.DrawingScope(outerColor))
             {
-                Handles.DrawLine(Vector3.zero, rangePosition);
-                Handles.DrawWireDisc(rangePosition, Vector3.forward, 0.25f);
+                Handles.DrawLine(Vector3.zero, Vector3.forward);
             }
-
-            //range = SliderLineHandle(Vector3.zero, Vector3.forward, range);
-//            if (EditorGUI.EndChangeCheck())
-//            {
-//                Undo.RecordObjects(new[] { light }, "Undo range change.");
-//                m_HandleHotControl = GUIUtility.hotControl;
-//                m_ShowAreaRange = true;
-//            }
-
-
-
 
             if (GUIUtility.hotControl != 0 && GUIUtility.hotControl == m_HandleHotControl)
             {
                 var style = new GUIStyle(GUI.skin.label);
-
-
-
                 string labelText = "";
-                if (m_ShowAreaRange)
-                {
-                    labelText = (light.range).ToString("0.00");
-                    var offsetFromHandle = 18;
-                    style.contentOffset = new Vector2(0, -(HandleUtility.GetHandleSize(labelPosition) * 0.03f + offsetFromHandle));
-                    Handles.Label(rangePosition, labelText, style);
-                }
-                if (m_ShowAreaWidthHeight)
-                {
                     labelText = $"{light.areaSize.x:0.##} x {light.areaSize.y:0.##}";
                     var offsetFromHandle = 30;
-                    style.contentOffset = new Vector2(0, -(HandleUtility.GetHandleSize(labelPosition) * 0.03f + offsetFromHandle));
+                    style.contentOffset = new Vector2(0, -(HandleUtility.GetHandleSize(labelPosition) * 0.03f - offsetFromHandle));
                     Handles.Label(labelPosition, labelText, style);
-                    //labelPosition =
-                }
-
-//                else if (m_ShowNearPlaneRange)
-//                    labelText = (spotlight.shadowNearPlane).ToString("0.00");
-//                else if (m_ShowOuterLabel)
-//                    labelText = (spotlight.spotAngle).ToString("0.00");
-//                else
-//                    labelText = (spotlight.innerSpotAngle).ToString("0.00");
-
-
-
             }
-
-            // Resets the member variables
-            if (EditorGUIUtility.hotControl == 0 && EditorGUIUtility.hotControl != m_HandleHotControl)
-            {
-                m_ShowAreaRange = false;
-            }
-
-//            if (GUIUtility.hotControl != 0 && GUIUtility.hotControl == m_HandleHotControl)
-//            {
-//                string labelText = (light.range).ToString("0.00");
-//                var style = new GUIStyle(GUI.skin.label);
-//                var offsetFromHandle = 20;
-//                style.contentOffset = new Vector2(0, -(HandleUtility.GetHandleSize(labelPosition) * 0.03f - offsetFromHandle));
-//                Handles.Label(labelPosition, labelText, style);
-//            }
             /////////////////////////////////////////////////////
         }
 
@@ -276,19 +214,19 @@ namespace UnityEditor.Rendering
 
             // Draw inner handles
             // Commented until inner angle will bake
-            float innerAngle = 0;
-            if (spotlight.innerSpotAngle > 0f && drawInnerConeAngle)
-            {
-                DrawHandleDirections = HandleDirections.Left | HandleDirections.Right;
-                EditorGUI.BeginChangeCheck();
-                innerAngle = DrawConeHandles(zeroPos, spotlight.innerSpotAngle, range, DrawHandleDirections);
-                if (EditorGUI.EndChangeCheck())
-                {
-                    Undo.RecordObjects(new[] { spotlight }, "Undo inner angle change.");
-                    m_HandleHotControl = GUIUtility.hotControl;
-                    m_ShowOuterLabel = false;
-                }
-            }
+//            float innerAngle = 0;
+//            if (spotlight.innerSpotAngle > 0f && drawInnerConeAngle)
+//            {
+//                DrawHandleDirections = HandleDirections.Left | HandleDirections.Right;
+//                EditorGUI.BeginChangeCheck();
+//                innerAngle = DrawConeHandles(zeroPos, spotlight.innerSpotAngle, range, DrawHandleDirections);
+//                if (EditorGUI.EndChangeCheck())
+//                {
+//                    Undo.RecordObjects(new[] { spotlight }, "Undo inner angle change.");
+//                    m_HandleHotControl = GUIUtility.hotControl;
+//                    m_ShowOuterLabel = false;
+//                }
+//            }
 
             // Draw Near Plane Handle
             float nearPlaneRange = spotlight.shadowNearPlane;
@@ -333,7 +271,8 @@ namespace UnityEditor.Rendering
             if (GUI.changed)
             {
                 spotlight.spotAngle = outerAngle;
-                spotlight.innerSpotAngle = innerAngle;
+                // Commented until inner cone angle bakes
+                //spotlight.innerSpotAngle = innerAngle;
                 spotlight.range = Math.Max(range, 0.01f);
                 spotlight.shadowNearPlane = nearPlaneRange;
             }
@@ -586,8 +525,6 @@ namespace UnityEditor.Rendering
             color.a = Mathf.Clamp01(color.a * 2);
             return (QualitySettings.activeColorSpace == ColorSpace.Linear) ? color.linear : color;
         }
-
-
 
         // Don't use Handles.Disc as it break the highlight of the gizmo axis, use our own draw disc function instead for gizmo
         public static void DrawWireDisc(Quaternion q, Vector3 position, Vector3 axis, float radius)
