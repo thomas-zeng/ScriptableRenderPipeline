@@ -1,7 +1,6 @@
 using System;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.Rendering.UI;
 
 namespace UnityEditor.Rendering
 {
@@ -300,7 +299,7 @@ namespace UnityEditor.Rendering
             return RemapLightColor(CoreUtils.ConvertSRGBToActiveColorSpace(color));
         }
 
-        public static Color GetLightBehindObjectWireframeColor(Color wireframeColor)
+        static Color GetLightBehindObjectWireframeColor(Color wireframeColor)
         {
             Color color = wireframeColor;
             color.a = 0.2f;
