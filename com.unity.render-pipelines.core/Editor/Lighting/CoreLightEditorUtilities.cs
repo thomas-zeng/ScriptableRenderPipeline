@@ -230,9 +230,8 @@ namespace UnityEditor.Rendering
 
             // Draw Near Plane Handle
             float nearPlaneRange = spotlight.shadowNearPlane;
-            if(spotlight.shadows != LightShadows.None && spotlight.shadowNearPlane > 0f)
+            if(spotlight.shadows != LightShadows.None && spotlight.lightmapBakeType != LightmapBakeType.Baked)
             {
-                // Draw Near Plane Handle
                 EditorGUI.BeginChangeCheck();
                 nearPlaneRange = SliderLineHandle(Vector3.zero, Vector3.forward, nearPlaneRange);
                 if (EditorGUI.EndChangeCheck())
@@ -274,7 +273,7 @@ namespace UnityEditor.Rendering
                 // Commented until inner cone angle bakes
                 //spotlight.innerSpotAngle = innerAngle;
                 spotlight.range = Math.Max(range, 0.01f);
-                spotlight.shadowNearPlane = nearPlaneRange;
+                spotlight.shadowNearPlane = Mathf.Clamp(nearPlaneRange, 0.1f, spotlight.range);
             }
 
             // Resets the member variables
@@ -370,7 +369,7 @@ namespace UnityEditor.Rendering
             Handles.DrawWireArc(Vector3.zero, Vector3.up, vectorLineLeft, outerAngle, range);
 
             // If we are using shadows we draw the near plane for shadows
-            if(spotlight.shadows != LightShadows.None)
+            if(spotlight.shadows != LightShadows.None && spotlight.lightmapBakeType != LightmapBakeType.Baked)
             {
                 DrawShadowNearPlane(spotlight, innerColor);
             }
