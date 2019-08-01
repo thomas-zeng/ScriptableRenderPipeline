@@ -8,25 +8,25 @@ using UnityEditor.ShaderGraph;
 
 namespace UnityEditor.Rendering.Universal
 {
-    delegate void OnGeneratePassDelegate(IMasterNode masterNode, ref Pass pass, ref ShaderGraphRequirements requirements);
-    struct Pass
-    {
-        public string Name;
-        public string TemplatePath;
-        public List<int> VertexShaderSlots;
-        public List<int> PixelShaderSlots;
-        public ShaderGraphRequirements Requirements;
-        public List<string> ExtraDefines;
-
-        public void OnGeneratePass(IMasterNode masterNode, ShaderGraphRequirements requirements)
-        {
-            if (OnGeneratePassImpl != null)
-            {
-                OnGeneratePassImpl(masterNode, ref this, ref requirements);
-            }
-        }
-        public OnGeneratePassDelegate OnGeneratePassImpl;
-    }
+    //delegate void OnGeneratePassDelegate(IMasterNode masterNode, ref Pass pass, ref ShaderGraphRequirements requirements);
+    //struct Pass
+    //{
+    //    public string Name;
+    //    public string TemplatePath;
+    //    public List<int> VertexShaderSlots;
+    //    public List<int> PixelShaderSlots;
+    //    public ShaderGraphRequirements Requirements;
+    //    public List<string> ExtraDefines;
+//
+    //    public void OnGeneratePass(IMasterNode masterNode, ShaderGraphRequirements requirements)
+    //    {
+    //        if (OnGeneratePassImpl != null)
+    //        {
+    //            OnGeneratePassImpl(masterNode, ref this, ref requirements);
+    //        }
+    //    }
+    //    public OnGeneratePassDelegate OnGeneratePassImpl;
+    //}
 
     static class UniversalSubShaderUtilities
     {
@@ -64,7 +64,7 @@ namespace UnityEditor.Rendering.Universal
 
                 foreach(Pass pass in passes)
                 {
-                    var templatePath = GetTemplatePath(pass.TemplatePath);
+                    var templatePath = GetTemplatePath(pass.TemplateName);
                     if (!File.Exists(templatePath))
                         continue;
 
