@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [7.1.1] - 2019-XX-XX
 ### Added
-- Sticky notes can now be deleted through the right click context menu.
+- You can now use the right-click context menu to delete Sticky Notes.
 
 ## [7.0.1] - 2019-07-25
 ### Changed
