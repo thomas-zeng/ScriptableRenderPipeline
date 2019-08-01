@@ -18,7 +18,7 @@ namespace UnityEditor.Rendering.Universal
         Pass m_ForwardPassMetallic = new Pass
         {
             Name = "UniversalForward",
-            TemplatePath = "universalPBRForwardPass.template",
+            TemplateName = "universalPBRForwardPass.template",
             PixelShaderSlots = new List<int>
             {
                 PBRMasterNode.AlbedoSlotId,
@@ -64,7 +64,7 @@ namespace UnityEditor.Rendering.Universal
         Pass m_ForwardPassSpecular = new Pass()
         {
             Name = "UniversalForward",
-            TemplatePath = "universalPBRForwardPass.template",
+            TemplateName = "universalPBRForwardPass.template",
             PixelShaderSlots = new List<int>()
             {
                 PBRMasterNode.AlbedoSlotId,
@@ -111,7 +111,7 @@ namespace UnityEditor.Rendering.Universal
         Pass m_ForwardPassMetallic2D = new Pass
         {
             Name = "Universal2D",
-            TemplatePath = "universal2DPBRPass.template",
+            TemplateName = "universal2DPBRPass.template",
             PixelShaderSlots = new List<int>
             {
                 PBRMasterNode.AlbedoSlotId,
@@ -157,7 +157,7 @@ namespace UnityEditor.Rendering.Universal
         Pass m_ForwardPassSpecular2D = new Pass()
         {
             Name = "Universal2D",
-            TemplatePath = "universal2DPBRPass.template",
+            TemplateName = "universal2DPBRPass.template",
             PixelShaderSlots = new List<int>()
             {
                 PBRMasterNode.AlbedoSlotId,
@@ -204,7 +204,7 @@ namespace UnityEditor.Rendering.Universal
         Pass m_DepthShadowPass = new Pass()
         {
             Name = "",
-            TemplatePath = "universalPBRExtraPasses.template",
+            TemplateName = "universalPBRExtraPasses.template",
             PixelShaderSlots = new List<int>()
             {
                 PBRMasterNode.AlbedoSlotId,
