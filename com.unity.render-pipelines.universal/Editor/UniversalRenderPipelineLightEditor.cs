@@ -323,7 +323,13 @@ namespace UnityEditor.Rendering.Universal
                 case LightType.Rectangle:
                     using (new Handles.DrawingScope(Matrix4x4.TRS(light.transform.position, light.transform.rotation, Vector3.one)))
                     {
-                        CoreLightEditorUtilities.DrawAreaLightWireFrameWithLabels(light);
+                        CoreLightEditorUtilities.DrawRectangleLightWireFrameWithLabels(light);
+                    }
+                    break;
+                case LightType.Disc:
+                    using (new Handles.DrawingScope(Matrix4x4.TRS(light.transform.position, light.transform.rotation, Vector3.one)))
+                    {
+                        CoreLightEditorUtilities.DrawDiscLightWireFrameWithZTest(light);
                     }
                     break;
 

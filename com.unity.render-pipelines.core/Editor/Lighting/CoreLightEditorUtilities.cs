@@ -47,8 +47,9 @@ namespace UnityEditor.Rendering
             /////////////////////////////////////////////////////
         }
 
-        public static void DrawAreaLightWireFrameWithLabels(Light light)
+        public static void DrawRectangleLightWireFrameWithLabels(Light light)
         {
+            Debug.Log(light.type);
             Vector2 size = light.areaSize;
 
             Color outerColor = GetLightAboveObjectWireframeColor(light.color);
@@ -58,7 +59,7 @@ namespace UnityEditor.Rendering
                 size = DoRectHandles(Quaternion.identity, Vector3.zero, size);
                 if (EditorGUI.EndChangeCheck())
                 {
-                    Undo.RecordObject(light, "Adjust Area Light");
+                    Undo.RecordObject(light, "Adjust Area Rectangle Light");
                     m_HandleHotControl = GUIUtility.hotControl;
                     light.areaSize = size;
                 }
@@ -83,6 +84,153 @@ namespace UnityEditor.Rendering
                     Handles.Label(labelPosition, labelText, style);
             }
             /////////////////////////////////////////////////////
+        }
+
+        public static void DrawDiscLightWireFrameWithZTest(Light light)
+        {
+            // Saving the default colors
+            var defColor = Handles.color;
+            var defZTest = Handles.zTest;
+
+            // Default Color for outer cone will be Yellow if nothing has been provided.
+            Color outerColor = GetLightAboveObjectWireframeColor(light.color);
+
+            // The default z-test outer color will be 20% opacity of the outer color
+            Color outerColorZTest = GetLightBehindObjectWireframeColor(outerColor);
+
+            // Default Color for inner cone will be Yellow-ish if nothing has been provided.
+            Color innerColor = GetLightInnerConeColor(light.color);
+
+            // The default z-test outer color will be 20% opacity of the inner color
+            Color innerColorZTest = GetLightBehindObjectWireframeColor(innerColor);
+
+            // Drawing before objects
+            Handles.zTest = CompareFunction.LessEqual;
+            DrawDiscLight(light, outerColor);
+
+            // Drawing behind objects
+            Handles.zTest = CompareFunction.Greater;
+            DrawDiscLight(light, outerColorZTest);
+
+            // Resets the compare function to always
+            Handles.zTest = CompareFunction.Always;
+
+            // Draw the handles and labels
+            DrawDiscHandlesAndLabel(light);
+
+            // Resets the handle colors
+            Handles.color = defColor;
+            Handles.zTest = defZTest;
+
+
+
+
+//            float radius = light.areaSize.x;
+//            Color outerColor = GetLightAboveObjectWireframeColor(light.color);
+//            using (new Handles.DrawingScope(outerColor))
+//            {
+//                EditorGUI.BeginChangeCheck();
+//                Handles.DrawWireDisc(Vector3.zero, Vector3.forward, radius/2);
+//                radius = SliderLineHandle(Vector3.zero, Vector3.left, radius/2);
+//                radius = SliderLineHandle(Vector3.zero, Vector3.right, radius);
+//                radius = SliderLineHandle(Vector3.zero, Vector3.up, radius);
+//                radius = SliderLineHandle(Vector3.zero, Vector3.down, radius);
+//                if (EditorGUI.EndChangeCheck())
+//                {
+//                    Undo.RecordObject(light, "Adjust Area Disc Light");
+//                    m_HandleHotControl = GUIUtility.hotControl;
+//                    light.areaSize = new Vector2(radius * 2, light.areaSize.y);
+//                }
+//            }
+
+            /*
+            // Draw Center Handle
+            float range = spotlight.range;
+            EditorGUI.BeginChangeCheck();
+            range = SliderLineHandle(Vector3.zero, Vector3.forward, range);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RecordObjects(new[] { spotlight }, "Undo range change.");
+                m_HandleHotControl = GUIUtility.hotControl;
+                m_ShowRange = true;
+            }
+            */
+
+            // Adding label /////////////////////////////////////
+            // Draw Center Line
+//            using (new Handles.DrawingScope(outerColor))
+//            {
+//                Handles.DrawLine(Vector3.zero, Vector3.forward);
+//            }
+//            Vector3 labelPosition = Vector3.zero;
+//            if (GUIUtility.hotControl != 0 && GUIUtility.hotControl == m_HandleHotControl)
+//            {
+//                var style = new GUIStyle(GUI.skin.label);
+//                string labelText = "";
+//                labelText = $"{light.areaSize.x:0.##} x {light.areaSize.y:0.##}";
+//                var offsetFromHandle = 30;
+//                style.contentOffset = new Vector2(0, -(HandleUtility.GetHandleSize(labelPosition) * 0.03f - offsetFromHandle));
+//                Handles.Label(labelPosition, labelText, style);
+//            }
+            /////////////////////////////////////////////////////
+        }
+
+        static void DrawDiscLight(Light light, Color outerColor)
+        {
+            float radius = light.areaSize.x;
+            using (new Handles.DrawingScope(outerColor))
+            {
+                //EditorGUI.BeginChangeCheck();
+                Handles.DrawWireDisc(Vector3.zero, Vector3.forward, radius/2);
+                Handles.DrawLine(Vector3.zero, Vector3.forward);
+//                radius = SliderLineHandle(Vector3.zero, Vector3.left, radius/2);
+//                radius = SliderLineHandle(Vector3.zero, Vector3.right, radius);
+//                radius = SliderLineHandle(Vector3.zero, Vector3.up, radius);
+//                radius = SliderLineHandle(Vector3.zero, Vector3.down, radius);
+//                if (EditorGUI.EndChangeCheck())
+//                {
+//                    Undo.RecordObject(light, "Adjust Area Disc Light");
+//                    m_HandleHotControl = GUIUtility.hotControl;
+//                    light.areaSize = new Vector2(radius * 2, light.areaSize.y);
+//                }
+            }
+
+            // Adding label /////////////////////////////////////
+            // Draw Center Line
+//            using (new Handles.DrawingScope(outerColor))
+//            {
+//                Handles.DrawLine(Vector3.zero, Vector3.forward);
+//            }
+//            Vector3 labelPosition = Vector3.zero;
+//            if (GUIUtility.hotControl != 0 && GUIUtility.hotControl == m_HandleHotControl)
+//            {
+//                var style = new GUIStyle(GUI.skin.label);
+//                string labelText = "";
+//                labelText = $"{light.areaSize.x:0.##} x {light.areaSize.y:0.##}";
+//                var offsetFromHandle = 30;
+//                style.contentOffset = new Vector2(0, -(HandleUtility.GetHandleSize(labelPosition) * 0.03f - offsetFromHandle));
+//                Handles.Label(labelPosition, labelText, style);
+//            }
+            /////////////////////////////////////////////////////
+        }
+
+        static void DrawDiscHandlesAndLabel(Light light)
+        {
+            float radius = light.areaSize.x;
+            // Draw the handles ///////////////////////////////
+            Handles.color = RemapLightColor(CoreUtils.ConvertSRGBToActiveColorSpace(light.color));
+
+            EditorGUI.BeginChangeCheck();
+            radius = SliderLineHandle(Vector3.zero, Vector3.left, radius/2);
+            radius = SliderLineHandle(Vector3.zero, Vector3.right, radius);
+            radius = SliderLineHandle(Vector3.zero, Vector3.up, radius);
+            radius = SliderLineHandle(Vector3.zero, Vector3.down, radius);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RecordObject(light, "Adjust Area Disc Light");
+                m_HandleHotControl = GUIUtility.hotControl;
+                light.areaSize = new Vector2(radius * 2, light.areaSize.y);
+            }
         }
 
         static Vector2 DoRectHandles(Quaternion rotation, Vector3 position, Vector2 size)
