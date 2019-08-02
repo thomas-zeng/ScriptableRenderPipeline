@@ -16,25 +16,45 @@ namespace UnityEditor.Rendering
             All = Left | Up | Right | Down
         }
 
-        public static void DrawPointLightWireFrameWithLabels(Light light)
+        public static void DrawPointLightWireFrameWithZTest(Light light)
         {
-            float range = light.range;
+            // Saving the default colors
+            var defColor = Handles.color;
+            var defZTest = Handles.zTest;
 
+            // Default Color for outer cone will be Yellow if nothing has been provided.
             Color outerColor = GetLightAboveObjectWireframeColor(light.color);
-            using (new Handles.DrawingScope(outerColor))
-            {
-                EditorGUI.BeginChangeCheck();
-                range = Handles.RadiusHandle(Quaternion.identity, light.transform.position, range);
-                if (EditorGUI.EndChangeCheck())
-                {
-                    Undo.RecordObject(light, "Adjust Point Light");
-                    m_HandleHotControl = GUIUtility.hotControl;
-                    light.range = range;
-                }
-            }
 
+            // The default z-test outer color will be 20% opacity of the outer color
+            Color outerColorZTest = GetLightBehindObjectWireframeColor(outerColor);
+
+            // Drawing before objects
+            Handles.zTest = CompareFunction.LessEqual;
+            DrawPointLight(light, outerColor);
+
+            // Drawing behind objects
+            Handles.zTest = CompareFunction.Greater;
+            DrawPointLight(light, outerColorZTest);
+
+            // Resets the compare function to always
+            Handles.zTest = CompareFunction.Always;
+
+            // Draw the handles and labels
+            DrawPointHandlesAndLabels(light);
+
+            // Resets the handle colors
+            Handles.color = defColor;
+            Handles.zTest = defZTest;
+            /////////////////////////////////////////////////////
+        }
+
+        static void DrawPointHandlesAndLabels(Light light)
+        {
             // Adding label /////////////////////////////////////
             Vector3 labelPosition = light.transform.position;
+
+            // Draw the handles ///////////////////////////////
+            Handles.color = RemapLightColor(CoreUtils.ConvertSRGBToActiveColorSpace(light.color));
 
             if (GUIUtility.hotControl != 0 && GUIUtility.hotControl == m_HandleHotControl)
             {
@@ -47,16 +67,63 @@ namespace UnityEditor.Rendering
             /////////////////////////////////////////////////////
         }
 
-        public static void DrawRectangleLightWireFrameWithLabels(Light light)
+        static void DrawPointLight(Light light, Color outerColor)
         {
-            Debug.Log(light.type);
-            Vector2 size = light.areaSize;
+            float range = light.range;
 
-            Color outerColor = GetLightAboveObjectWireframeColor(light.color);
             using (new Handles.DrawingScope(outerColor))
             {
                 EditorGUI.BeginChangeCheck();
-                size = DoRectHandles(Quaternion.identity, Vector3.zero, size);
+                range = Handles.RadiusHandle(Quaternion.identity, light.transform.position, range);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Undo.RecordObject(light, "Adjust Point Light");
+                    m_HandleHotControl = GUIUtility.hotControl;
+                    light.range = range;
+                }
+            }
+        }
+
+        public static void DrawRectangleLightWireFrameWithZTest(Light light)
+        {
+            // Saving the default colors
+            var defColor = Handles.color;
+            var defZTest = Handles.zTest;
+
+            // Default Color for outer cone will be Yellow if nothing has been provided.
+            Color outerColor = GetLightAboveObjectWireframeColor(light.color);
+
+            // The default z-test outer color will be 20% opacity of the outer color
+            Color outerColorZTest = GetLightBehindObjectWireframeColor(outerColor);
+
+            // Drawing before objects
+            Handles.zTest = CompareFunction.LessEqual;
+            DrawRectangleLight(light, outerColor, outerColor);
+
+            // Drawing behind objects
+            Handles.zTest = CompareFunction.Greater;
+            DrawRectangleLight(light, outerColorZTest, outerColor);
+
+            // Resets the compare function to always
+            Handles.zTest = CompareFunction.Always;
+
+            // Draw the handles and labels
+            DrawRectangleHandlesAndLabels(light);
+
+            // Resets the handle colors
+            Handles.color = defColor;
+            Handles.zTest = defZTest;
+            /////////////////////////////////////////////////////
+        }
+
+        static void DrawRectangleLight(Light light, Color outerColor, Color handleColor)
+        {
+            Vector2 size = light.areaSize;
+
+            using (new Handles.DrawingScope(outerColor))
+            {
+                EditorGUI.BeginChangeCheck();
+                size = DoRectHandles(Quaternion.identity, Vector3.zero, size, handleColor);
                 if (EditorGUI.EndChangeCheck())
                 {
                     Undo.RecordObject(light, "Adjust Area Rectangle Light");
@@ -64,24 +131,24 @@ namespace UnityEditor.Rendering
                     light.areaSize = size;
                 }
             }
+        }
 
+        static void DrawRectangleHandlesAndLabels(Light light)
+        {
             // Adding label /////////////////////////////////////
             Vector3 labelPosition = Vector3.zero;
 
             // Draw Center Line
-            using (new Handles.DrawingScope(outerColor))
-            {
-                Handles.DrawLine(Vector3.zero, Vector3.forward);
-            }
+            Handles.DrawLine(Vector3.zero, Vector3.forward);
 
             if (GUIUtility.hotControl != 0 && GUIUtility.hotControl == m_HandleHotControl)
             {
                 var style = new GUIStyle(GUI.skin.label);
                 string labelText = "";
-                    labelText = $"{light.areaSize.x:0.##} x {light.areaSize.y:0.##}";
-                    var offsetFromHandle = 30;
-                    style.contentOffset = new Vector2(0, -(HandleUtility.GetHandleSize(labelPosition) * 0.03f - offsetFromHandle));
-                    Handles.Label(labelPosition, labelText, style);
+                labelText = $"{light.areaSize.x:0.##} x {light.areaSize.y:0.##}";
+                var offsetFromHandle = 30;
+                style.contentOffset = new Vector2(0, -(HandleUtility.GetHandleSize(labelPosition) * 0.03f - offsetFromHandle));
+                Handles.Label(labelPosition, labelText, style);
             }
             /////////////////////////////////////////////////////
         }
@@ -98,12 +165,6 @@ namespace UnityEditor.Rendering
             // The default z-test outer color will be 20% opacity of the outer color
             Color outerColorZTest = GetLightBehindObjectWireframeColor(outerColor);
 
-            // Default Color for inner cone will be Yellow-ish if nothing has been provided.
-            Color innerColor = GetLightInnerConeColor(light.color);
-
-            // The default z-test outer color will be 20% opacity of the inner color
-            Color innerColorZTest = GetLightBehindObjectWireframeColor(innerColor);
-
             // Drawing before objects
             Handles.zTest = CompareFunction.LessEqual;
             DrawDiscLight(light, outerColor);
@@ -115,63 +176,9 @@ namespace UnityEditor.Rendering
             // Resets the compare function to always
             Handles.zTest = CompareFunction.Always;
 
-            // Draw the handles and labels
-            DrawDiscHandlesAndLabel(light);
-
             // Resets the handle colors
             Handles.color = defColor;
             Handles.zTest = defZTest;
-
-
-
-
-//            float radius = light.areaSize.x;
-//            Color outerColor = GetLightAboveObjectWireframeColor(light.color);
-//            using (new Handles.DrawingScope(outerColor))
-//            {
-//                EditorGUI.BeginChangeCheck();
-//                Handles.DrawWireDisc(Vector3.zero, Vector3.forward, radius/2);
-//                radius = SliderLineHandle(Vector3.zero, Vector3.left, radius/2);
-//                radius = SliderLineHandle(Vector3.zero, Vector3.right, radius);
-//                radius = SliderLineHandle(Vector3.zero, Vector3.up, radius);
-//                radius = SliderLineHandle(Vector3.zero, Vector3.down, radius);
-//                if (EditorGUI.EndChangeCheck())
-//                {
-//                    Undo.RecordObject(light, "Adjust Area Disc Light");
-//                    m_HandleHotControl = GUIUtility.hotControl;
-//                    light.areaSize = new Vector2(radius * 2, light.areaSize.y);
-//                }
-//            }
-
-            /*
-            // Draw Center Handle
-            float range = spotlight.range;
-            EditorGUI.BeginChangeCheck();
-            range = SliderLineHandle(Vector3.zero, Vector3.forward, range);
-            if (EditorGUI.EndChangeCheck())
-            {
-                Undo.RecordObjects(new[] { spotlight }, "Undo range change.");
-                m_HandleHotControl = GUIUtility.hotControl;
-                m_ShowRange = true;
-            }
-            */
-
-            // Adding label /////////////////////////////////////
-            // Draw Center Line
-//            using (new Handles.DrawingScope(outerColor))
-//            {
-//                Handles.DrawLine(Vector3.zero, Vector3.forward);
-//            }
-//            Vector3 labelPosition = Vector3.zero;
-//            if (GUIUtility.hotControl != 0 && GUIUtility.hotControl == m_HandleHotControl)
-//            {
-//                var style = new GUIStyle(GUI.skin.label);
-//                string labelText = "";
-//                labelText = $"{light.areaSize.x:0.##} x {light.areaSize.y:0.##}";
-//                var offsetFromHandle = 30;
-//                style.contentOffset = new Vector2(0, -(HandleUtility.GetHandleSize(labelPosition) * 0.03f - offsetFromHandle));
-//                Handles.Label(labelPosition, labelText, style);
-//            }
             /////////////////////////////////////////////////////
         }
 
@@ -180,45 +187,20 @@ namespace UnityEditor.Rendering
             float radius = light.areaSize.x;
             using (new Handles.DrawingScope(outerColor))
             {
-                //EditorGUI.BeginChangeCheck();
                 Handles.DrawWireDisc(Vector3.zero, Vector3.forward, radius/2);
                 Handles.DrawLine(Vector3.zero, Vector3.forward);
-//                radius = SliderLineHandle(Vector3.zero, Vector3.left, radius/2);
-//                radius = SliderLineHandle(Vector3.zero, Vector3.right, radius);
-//                radius = SliderLineHandle(Vector3.zero, Vector3.up, radius);
-//                radius = SliderLineHandle(Vector3.zero, Vector3.down, radius);
-//                if (EditorGUI.EndChangeCheck())
-//                {
-//                    Undo.RecordObject(light, "Adjust Area Disc Light");
-//                    m_HandleHotControl = GUIUtility.hotControl;
-//                    light.areaSize = new Vector2(radius * 2, light.areaSize.y);
-//                }
+                DrawDiscHandlesAndLabel(light);
             }
-
-            // Adding label /////////////////////////////////////
-            // Draw Center Line
-//            using (new Handles.DrawingScope(outerColor))
-//            {
-//                Handles.DrawLine(Vector3.zero, Vector3.forward);
-//            }
-//            Vector3 labelPosition = Vector3.zero;
-//            if (GUIUtility.hotControl != 0 && GUIUtility.hotControl == m_HandleHotControl)
-//            {
-//                var style = new GUIStyle(GUI.skin.label);
-//                string labelText = "";
-//                labelText = $"{light.areaSize.x:0.##} x {light.areaSize.y:0.##}";
-//                var offsetFromHandle = 30;
-//                style.contentOffset = new Vector2(0, -(HandleUtility.GetHandleSize(labelPosition) * 0.03f - offsetFromHandle));
-//                Handles.Label(labelPosition, labelText, style);
-//            }
-            /////////////////////////////////////////////////////
         }
 
         static void DrawDiscHandlesAndLabel(Light light)
         {
+            // Adding label /////////////////////////////////////
+            Vector3 labelPosition = Vector3.zero;
+
             float radius = light.areaSize.x;
             // Draw the handles ///////////////////////////////
-            Handles.color = RemapLightColor(CoreUtils.ConvertSRGBToActiveColorSpace(light.color));
+            Handles.color = HandleColor();
 
             EditorGUI.BeginChangeCheck();
             radius = SliderLineHandle(Vector3.zero, Vector3.left, radius/2);
@@ -231,9 +213,18 @@ namespace UnityEditor.Rendering
                 m_HandleHotControl = GUIUtility.hotControl;
                 light.areaSize = new Vector2(radius * 2, light.areaSize.y);
             }
+
+            if (GUIUtility.hotControl != 0 && GUIUtility.hotControl == m_HandleHotControl)
+            {
+                string labelText = (light.areaSize.x).ToString("0.00");
+                var style = new GUIStyle(GUI.skin.label);
+                var offsetFromHandle = 20;
+                style.contentOffset = new Vector2(0, -(HandleUtility.GetHandleSize(labelPosition) * 0.03f - offsetFromHandle));
+                Handles.Label(labelPosition, labelText, style);
+            }
         }
 
-        static Vector2 DoRectHandles(Quaternion rotation, Vector3 position, Vector2 size)
+        static Vector2 DoRectHandles(Quaternion rotation, Vector3 position, Vector2 size, Color handleColor)
         {
             Vector3 up = rotation * Vector3.up;
             Vector3 right = rotation * Vector3.right;
@@ -241,21 +232,21 @@ namespace UnityEditor.Rendering
             float halfWidth = 0.5f * size.x;
             float halfHeight = 0.5f * size.y;
 
+            Vector3 topRight = position + up * halfHeight + right * halfWidth;
+            Vector3 bottomRight = position - up * halfHeight + right * halfWidth;
+            Vector3 bottomLeft = position - up * halfHeight - right * halfWidth;
+            Vector3 topLeft = position + up * halfHeight - right * halfWidth;
 
-                Vector3 topRight = position + up * halfHeight + right * halfWidth;
-                Vector3 bottomRight = position - up * halfHeight + right * halfWidth;
-                Vector3 bottomLeft = position - up * halfHeight - right * halfWidth;
-                Vector3 topLeft = position + up * halfHeight - right * halfWidth;
-
-                // Draw rectangle
-                Handles.DrawLine(topRight, bottomRight);
-                Handles.DrawLine(bottomRight, bottomLeft);
-                Handles.DrawLine(bottomLeft, topLeft);
-                Handles.DrawLine(topLeft, topRight);
-
+            // Draw rectangle
+            Handles.DrawLine(topRight, bottomRight);
+            Handles.DrawLine(bottomRight, bottomLeft);
+            Handles.DrawLine(bottomLeft, topLeft);
+            Handles.DrawLine(topLeft, topRight);
 
             // Give handles twice the alpha of the lines
             Color origCol = Handles.color;
+
+            // Draw the handles ///////////////////////////////
             Handles.color = HandleColor();
 
             // Draw handles
@@ -282,7 +273,7 @@ namespace UnityEditor.Rendering
         }
 
         static bool drawInnerConeAngle = true;
-        public static void DrawSpotlightWireFrameWithZTest(Light spotlight, Color? drawColorOuter = null, Color? drawColorInner = null, bool drawHandlesAndLabels = true)
+        public static void DrawSpotlightWireFrameWithZTest(Light spotlight, Color? drawColorOuter = null, Color? drawColorInner = null)
         {
             // Saving the default colors
             var defColor = Handles.color;
@@ -311,9 +302,6 @@ namespace UnityEditor.Rendering
             // Resets the compare function to always
             Handles.zTest = CompareFunction.Always;
 
-            if(drawHandlesAndLabels)
-                DrawHandlesAndLabels(spotlight);
-
             // Resets the handle colors
             Handles.color = defColor;
             Handles.zTest = defZTest;
@@ -334,7 +322,7 @@ namespace UnityEditor.Rendering
             HandleDirections DrawHandleDirections;
 
             // Draw the handles ///////////////////////////////
-            Handles.color = RemapLightColor(CoreUtils.ConvertSRGBToActiveColorSpace(spotlight.color));
+            Handles.color = HandleColor();
 
             // Draw Center Handle
             float range = spotlight.range;
@@ -520,6 +508,8 @@ namespace UnityEditor.Rendering
             {
                 DrawShadowNearPlane(spotlight, innerColor);
             }
+
+            DrawHandlesAndLabels(spotlight);
         }
 
         static void DrawShadowNearPlane(Light spotlight, Color color)
