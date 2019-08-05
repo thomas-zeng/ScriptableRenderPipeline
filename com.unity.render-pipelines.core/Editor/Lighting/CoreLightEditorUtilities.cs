@@ -139,7 +139,11 @@ namespace UnityEditor.Rendering
             Vector3 labelPosition = Vector3.zero;
 
             // Draw Center Line
-            Handles.DrawLine(Vector3.zero, Vector3.forward);
+            Color color = RemapLightColor(CoreUtils.ConvertSRGBToActiveColorSpace(light.color));
+            using (new Handles.DrawingScope(color))
+            {
+                Handles.DrawLine(Vector3.zero, Vector3.forward);
+            }
 
             if (GUIUtility.hotControl != 0 && GUIUtility.hotControl == m_HandleHotControl)
             {
