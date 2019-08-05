@@ -165,14 +165,24 @@ namespace UnityEngine.Rendering.Universal
                 desc.height = (int)((float)desc.height * renderScale);
             }
 
-            RenderTextureFormat rt32BitHDR = needsAlpha ? RenderTextureFormat.ARGB2101010 : RenderTextureFormat.RGB111110Float;
-            bool use32BitHDR = Application.isMobilePlatform && RenderingUtils.SupportsRenderTextureFormat(rt32BitHDR);
-            RenderTextureFormat hdrFormat = (use32BitHDR) ? rt32BitHDR : RenderTextureFormat.DefaultHDR;
-            desc.colorFormat = isHdrEnabled ? hdrFormat : renderTextureFormatDefault;
-            desc.depthBufferBits = 32;
+            bool use32BitHDR = !needsAlpha && RenderingUtils.SupportsRenderTextureFormat(RenderTextureFormat.RGB111110Float);
+            RenderTextureFormat hdrFormat = (use32BitHDR) ? RenderTextureFormat.RGB111110Float : RenderTextureFormat.DefaultHDR;
+            if (camera.targetTexture != null)
+            {
+                desc.colorFormat = camera.targetTexture.descriptor.colorFormat;
+                desc.depthBufferBits = camera.targetTexture.descriptor.depthBufferBits;
+                desc.msaaSamples = camera.targetTexture.descriptor.msaaSamples;
+                desc.sRGB = camera.targetTexture.descriptor.sRGB;
+            }
+            else
+            {
+                desc.colorFormat = isHdrEnabled ? hdrFormat : renderTextureFormatDefault;
+                desc.depthBufferBits = 32;
+                desc.msaaSamples = msaaSamples;
+                desc.sRGB = (QualitySettings.activeColorSpace == ColorSpace.Linear);
+            }
+            
             desc.enableRandomWrite = false;
-            desc.sRGB = (QualitySettings.activeColorSpace == ColorSpace.Linear);
-            desc.msaaSamples = msaaSamples;
             desc.bindMS = false;
             desc.useDynamicScale = camera.allowDynamicResolution;
             return desc;
