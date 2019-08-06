@@ -75,15 +75,9 @@ namespace UnityEngine.Experimental.Rendering.Universal
                 m_PreviousPathHash = m_ShapePathHash;
             }
 
-            LightUtility.AddToLightReactorToGroup(this, ref m_ShadowCasterGroup);
-            ShadowCasterGroup2DManager.AddGroup(this);
+            m_ShadowCasterGroup = null;
         }
 
-        protected void OnDisable()
-        {
-            LightUtility.RemoveLightReactorFromGroup(this, m_ShadowCasterGroup);
-            ShadowCasterGroup2DManager.RemoveGroup(this);
-        }
 
         public void Update()
         {
@@ -96,7 +90,15 @@ namespace UnityEngine.Experimental.Rendering.Universal
             m_PreviousShadowCasterGroup = m_ShadowCasterGroup;
             bool addedToNewGroup = LightUtility.AddToLightReactorToGroup(this, ref m_ShadowCasterGroup);
             if (addedToNewGroup && m_ShadowCasterGroup != null)
+            {
+                if (m_PreviousShadowCasterGroup == this)
+                    ShadowCasterGroup2DManager.RemoveGroup(this);
                 LightUtility.RemoveLightReactorFromGroup(this, m_PreviousShadowCasterGroup);
+
+                if (m_ShadowCasterGroup == this)
+                    ShadowCasterGroup2DManager.AddGroup(this);
+            }
+
 
 
             if (LightUtility.CheckForChange(m_ShadowGroup, ref m_PreviousShadowGroup))

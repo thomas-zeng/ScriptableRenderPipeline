@@ -203,6 +203,12 @@ namespace UnityEngine.Experimental.Rendering.Universal
                                                     cmdBuffer.DrawRenderer(renderer, shadowMaterial, 0, 1);
                                             }
                                         }
+                                        else
+                                        {
+                                            Matrix4x4 meshMat = Matrix4x4.TRS(shadowCaster.transform.position, shadowCaster.transform.rotation, shadowCaster.transform.lossyScale);
+                                            if (!shadowCaster.selfShadows)
+                                                cmdBuffer.DrawMesh(shadowCaster.mesh, meshMat, removeSelfShadowMaterial);
+                                        }
                                     }
                                     else
                                     {

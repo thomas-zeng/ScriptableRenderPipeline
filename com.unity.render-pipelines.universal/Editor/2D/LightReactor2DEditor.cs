@@ -31,11 +31,11 @@ namespace UnityEditor.Experimental.Rendering.Universal
         SerializedProperty m_ReceivesShadows;
         string[] m_PopupContent;
 
-        SortingLayerDropDown m_SortingLayerDropDown;
-
 
         public void OnEnable()
         {
+
+
             m_ShadowMode = serializedObject.FindProperty("m_ShadowMode");
             m_ShadowCasterGroup = serializedObject.FindProperty("m_ShadowGroup");
             m_SelfShadows = serializedObject.FindProperty("m_SelfShadows");
@@ -46,10 +46,6 @@ namespace UnityEditor.Experimental.Rendering.Universal
             m_PopupContent[0] = "Auto Assign";
             for(int i=1;i<popupElements;i++)
                 m_PopupContent[i] = i.ToString();
-
-            m_SortingLayerDropDown = new SortingLayerDropDown();
-            m_SortingLayerDropDown.OnEnable(serializedObject);
-
         }
 
         public void ShadowCaster2DSceneGUI()
@@ -86,13 +82,14 @@ namespace UnityEditor.Experimental.Rendering.Universal
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-            EditorGUILayout.PropertyField(m_ShadowMode, Styles.shadowMode); // This needs to be changed to a popup later...
-            m_ShadowCasterGroup.intValue = EditorGUILayout.Popup(Styles.shadowCasterGroup, m_ShadowCasterGroup.intValue, m_PopupContent, GUILayout.Height(40));
-            EditorGUILayout.PropertyField(m_SelfShadows, Styles.selfShadows);
-            EditorGUILayout.PropertyField(m_CastsShadows, Styles.castsShadows);
-            serializedObject.ApplyModifiedProperties();
 
-            m_SortingLayerDropDown.OnTargetSortingLayers(serializedObject, targets);
+            EditorGUILayout.PropertyField(m_ShadowMode, Styles.shadowMode); // This needs to be changed to a popup later...
+
+            //m_ShadowCasterGroup.intValue = EditorGUILayout.Popup(Styles.shadowCasterGroup, m_ShadowCasterGroup.intValue, m_PopupContent, GUILayout.Height(40));
+            EditorGUILayout.PropertyField(m_SelfShadows, Styles.selfShadows);
+            if (m_ShadowMode.intValue != (int)LightReactor2D.ShadowModes.RendererOnly)
+                EditorGUILayout.PropertyField(m_CastsShadows, Styles.castsShadows);
+            serializedObject.ApplyModifiedProperties();
 
             ShadowCaster2DInspectorGUI<LightReactor2DShadowCasterShapeTool>();
         }
