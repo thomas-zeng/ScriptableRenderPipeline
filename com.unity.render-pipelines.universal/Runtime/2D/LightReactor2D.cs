@@ -59,15 +59,14 @@ namespace UnityEngine.Experimental.Rendering.Universal
             m_PreviousParent = transform.parent;
         }
 
-        private void OnStart()
+
+        protected void OnEnable()
         {
             m_Renderer = GetComponent<Renderer>();
             if (m_Renderer == null)
                 m_ShadowMode = ShadowModes.CasterOnly;
-        }
 
-        protected void OnEnable()
-        {
+
             if (m_Mesh == null)
             {
                 m_Mesh = new Mesh();
@@ -76,6 +75,11 @@ namespace UnityEngine.Experimental.Rendering.Universal
             }
 
             m_ShadowCasterGroup = null;
+        }
+
+        protected void OnDisable()
+        {
+            LightUtility.RemoveLightReactorFromGroup(this, m_ShadowCasterGroup);
         }
 
 
@@ -93,8 +97,8 @@ namespace UnityEngine.Experimental.Rendering.Universal
             {
                 if (m_PreviousShadowCasterGroup == this)
                     ShadowCasterGroup2DManager.RemoveGroup(this);
-                LightUtility.RemoveLightReactorFromGroup(this, m_PreviousShadowCasterGroup);
 
+                LightUtility.RemoveLightReactorFromGroup(this, m_PreviousShadowCasterGroup);
                 if (m_ShadowCasterGroup == this)
                     ShadowCasterGroup2DManager.AddGroup(this);
             }
