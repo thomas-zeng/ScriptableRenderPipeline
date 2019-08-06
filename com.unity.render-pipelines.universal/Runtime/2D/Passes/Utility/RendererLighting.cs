@@ -85,12 +85,9 @@ namespace UnityEngine.Experimental.Rendering.Universal
             descriptor.msaaSamples = 1;
             descriptor.dimension = TextureDimension.Tex2D;
 
-
-
             descriptor.width = (int)(camera.pixelWidth);
             descriptor.height = (int)(camera.pixelHeight);
             cmd.GetTemporaryRT(s_NormalsTarget.id, descriptor, FilterMode.Bilinear);
-
             
             for (int i = 0; i < s_BlendStyles.Length; ++i)
             {
@@ -169,12 +166,16 @@ namespace UnityEngine.Experimental.Rendering.Universal
                         LightReactor2D lightReactor = shadowCasterGroup as LightReactor2D;
                         if (lightReactor != null)
                         {
-                            Renderer renderer = lightReactor.GetComponent<Renderer>();
-                            shadowGroupCanBeRendered = light.IsLitLayer(renderer.sortingLayerID);
-
-                            if (renderer.gameObject.name == "Platform_1")
-                                Debug.Log("Platform 1");
-                        }   
+                            if (lightReactor.shadowMode == LightReactor2D.ShadowModes.CasterOnly)
+                            {
+                                //light.IsLitLayer(lightReactor.sortingLayerID);
+                            }
+                            else
+                            {
+                                Renderer renderer = lightReactor.GetComponent<Renderer>();
+                                shadowGroupCanBeRendered = light.IsLitLayer(renderer.sortingLayerID);
+                            }
+                        }
 
                         if (shadowGroupCanBeRendered)
                         {

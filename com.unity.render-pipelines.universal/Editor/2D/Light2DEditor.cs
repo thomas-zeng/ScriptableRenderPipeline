@@ -92,11 +92,6 @@ namespace UnityEditor.Experimental.Rendering.Universal
             public static GUIContent shapeLightFalloffOffset = EditorGUIUtility.TrTextContent("Falloff Offset", "Specify the shape's falloff offset");
             public static GUIContent shapeLightAngleOffset = EditorGUIUtility.TrTextContent("Angle Offset", "Adjust the rotation of the object");
 
-            public static GUIContent sortingLayerPrefixLabel = EditorGUIUtility.TrTextContent("Target Sorting Layers", "Apply this light to the specified sorting layers.");
-            public static GUIContent sortingLayerAll = EditorGUIUtility.TrTextContent("All");
-            public static GUIContent sortingLayerNone = EditorGUIUtility.TrTextContent("None");
-            public static GUIContent sortingLayerMixed = EditorGUIUtility.TrTextContent("Mixed...");
-
             public static GUIContent renderPipelineUnassignedWarning = EditorGUIUtility.TrTextContentWithIcon("Universal scriptable renderpipeline asset must be assigned in graphics settings", MessageType.Warning);
             public static GUIContent asset2DUnassignedWarning = EditorGUIUtility.TrTextContentWithIcon("2D renderer data must be assigned to your universal render pipeline asset", MessageType.Warning);
         }
@@ -141,10 +136,8 @@ namespace UnityEditor.Experimental.Rendering.Universal
         int[]           m_BlendStyleIndices;
         GUIContent[]    m_BlendStyleNames;
         bool            m_AnyBlendStyleEnabled  = false;
-        Rect            m_SortingLayerDropdownRect  = new Rect();
-        SortingLayer[]  m_AllSortingLayers;
-        GUIContent[]    m_AllSortingLayerNames;
-        List<int>       m_ApplyToSortingLayersList;
+
+        SortingLayerDropDown m_SortingLayerDropDown;
 
         Light2D lightObject => target as Light2D;
 
@@ -194,6 +187,8 @@ namespace UnityEditor.Experimental.Rendering.Universal
         {
             m_Analytics = Analytics.Renderer2DAnalytics.instance;
             m_ModifiedLights = new HashSet<Light2D>();
+            m_SortingLayerDropDown = new SortingLayerDropDown();
+
             m_LightType = serializedObject.FindProperty("m_LightType");
             m_LightColor = serializedObject.FindProperty("m_Color");
             m_LightIntensity = serializedObject.FindProperty("m_Intensity");
@@ -257,18 +252,8 @@ namespace UnityEditor.Experimental.Rendering.Universal
             m_BlendStyleIndices = blendStyleIndices.ToArray();
             m_BlendStyleNames = blendStyleNames.Select(x => new GUIContent(x)).ToArray();
 
-            m_AllSortingLayers = SortingLayer.layers;
-            m_AllSortingLayerNames = m_AllSortingLayers.Select(x => new GUIContent(x.name)).ToArray();
 
-            int applyToSortingLayersSize = m_ApplyToSortingLayers.arraySize;
-            m_ApplyToSortingLayersList = new List<int>(applyToSortingLayersSize);
-
-            for (int i = 0; i < applyToSortingLayersSize; ++i)
-            {
-                int layerID = m_ApplyToSortingLayers.GetArrayElementAtIndex(i).intValue;
-                if (SortingLayer.IsValid(layerID))
-                    m_ApplyToSortingLayersList.Add(layerID);
-            }
+            m_SortingLayerDropDown.OnEnable(serializedObject);
         }
 
         internal void SendModifiedAnalytics(Analytics.Renderer2DAnalytics analytics, Light2D light)
@@ -353,91 +338,6 @@ namespace UnityEditor.Experimental.Rendering.Universal
                     EditorGUIUtility.wideMode = oldWideMode;
                 }
             }
-        }
-
-        void UpdateApplyToSortingLayersArray()
-        {
-            m_ApplyToSortingLayers.ClearArray();
-            for (int i = 0; i < m_ApplyToSortingLayersList.Count; ++i)
-            {
-                m_ApplyToSortingLayers.InsertArrayElementAtIndex(i);
-                m_ApplyToSortingLayers.GetArrayElementAtIndex(i).intValue = m_ApplyToSortingLayersList[i];
-            }
-
-            AnalyticsTrackChanges(serializedObject);
-            serializedObject.ApplyModifiedProperties();
-
-            foreach (Light2D light in targets)
-            {
-                if (light != null && light.lightType == Light2D.LightType.Global)
-                    light.ErrorIfDuplicateGlobalLight();
-            }
-        }
-
-        void OnNoSortingLayerSelected()
-        {
-            m_ApplyToSortingLayersList.Clear();
-            UpdateApplyToSortingLayersArray();
-        }
-
-        void OnAllSortingLayersSelected()
-        {
-            m_ApplyToSortingLayersList.Clear();
-            m_ApplyToSortingLayersList.AddRange(m_AllSortingLayers.Select(x => x.id));
-            UpdateApplyToSortingLayersArray();
-        }
-
-        void OnSortingLayerSelected(object layerIDObject)
-        {
-            int layerID = (int)layerIDObject;
-
-            if (m_ApplyToSortingLayersList.Contains(layerID))
-                m_ApplyToSortingLayersList.RemoveAll(id => id == layerID);
-            else
-                m_ApplyToSortingLayersList.Add(layerID);
-
-            UpdateApplyToSortingLayersArray();
-        }
-
-        void OnTargetSortingLayers()
-        {
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.PrefixLabel(Styles.sortingLayerPrefixLabel);
-
-            GUIContent selectedLayers;
-            if (m_ApplyToSortingLayersList.Count == 1)
-                selectedLayers = new GUIContent(SortingLayer.IDToName(m_ApplyToSortingLayersList[0]));
-            else if (m_ApplyToSortingLayersList.Count == m_AllSortingLayers.Length)
-                selectedLayers = Styles.sortingLayerAll;
-            else if (m_ApplyToSortingLayersList.Count == 0)
-                selectedLayers = Styles.sortingLayerNone;
-            else
-                selectedLayers = Styles.sortingLayerMixed;
-
-            bool buttonDown = EditorGUILayout.DropdownButton(selectedLayers, FocusType.Keyboard, EditorStyles.popup);
-
-            if (Event.current.type == EventType.Repaint)
-                m_SortingLayerDropdownRect = GUILayoutUtility.GetLastRect();
-
-            if (buttonDown)
-            {
-                GenericMenu menu = new GenericMenu();
-                menu.allowDuplicateNames = true;
-
-                menu.AddItem(Styles.sortingLayerNone, m_ApplyToSortingLayersList.Count == 0, OnNoSortingLayerSelected);
-                menu.AddItem(Styles.sortingLayerAll, m_ApplyToSortingLayersList.Count == m_AllSortingLayers.Length, OnAllSortingLayersSelected);
-                menu.AddSeparator("");
-
-                for (int i = 0; i < m_AllSortingLayers.Length; ++i)
-                {
-                    var sortingLayer = m_AllSortingLayers[i];
-                    menu.AddItem(m_AllSortingLayerNames[i], m_ApplyToSortingLayersList.Contains(sortingLayer.id), OnSortingLayerSelected, sortingLayer.id);
-                }
-
-                menu.DropDown(m_SortingLayerDropdownRect);
-            }
-
-            EditorGUILayout.EndHorizontal();
         }
 
         Vector3 DrawAngleSlider2D(Transform transform, Quaternion rotation, float radius, float offset, Handles.CapFunction capFunc, float capSize, bool leftAngle, bool drawLine, bool useCapOffset, ref float angle)
@@ -742,7 +642,7 @@ namespace UnityEditor.Experimental.Rendering.Universal
                 EditorGUILayout.Slider(m_ShadowVolumeIntensity, 0, 1, Styles.generalShadowVolumeIntensity);
             }
 
-            OnTargetSortingLayers();
+            m_SortingLayerDropDown.OnTargetSortingLayers(serializedObject, targets);
 
             if (m_LightType.intValue == (int)Light2D.LightType.Freeform)
             {

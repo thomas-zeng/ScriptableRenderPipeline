@@ -6,10 +6,17 @@ namespace UnityEngine.Experimental.Rendering.Universal
 {
 
     [ExecuteInEditMode]
-    [RequireComponent(typeof(Renderer))]
     [AddComponentMenu("Rendering/2D/Light Reactor 2D (Experimental)")]
     public class LightReactor2D : ShadowCaster2D, IShadowCasterGroup2D
     {
+        public enum ShadowModes
+        {
+            Default,
+            CasterOnly,
+            RendererOnly
+        }
+
+        [SerializeField] ShadowModes m_ShadowMode;
         [SerializeField] int m_ShadowGroup = 0;
         [SerializeField] bool m_SelfShadows = false;
         [SerializeField] bool m_CastsShadows = true;
@@ -17,8 +24,10 @@ namespace UnityEngine.Experimental.Rendering.Universal
         List<ShadowCaster2D> m_ShadowCasters;
         Renderer m_Renderer;
 
+        public ShadowModes shadowMode => m_ShadowMode;
         public bool selfShadows => m_SelfShadows;
         public bool castsShadows => m_CastsShadows;
+
 
         int m_PreviousShadowGroup = 0;
         bool m_PreviousCastsShadows = true;
@@ -46,6 +55,8 @@ namespace UnityEngine.Experimental.Rendering.Universal
         private void OnStart()
         {
             m_Renderer = GetComponent<Renderer>();
+            if (m_Renderer == null)
+                m_ShadowMode = ShadowModes.CasterOnly;
         }
 
         new private void OnEnable()
