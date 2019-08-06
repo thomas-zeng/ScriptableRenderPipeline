@@ -273,8 +273,8 @@ namespace UnityEngine.Rendering.HighDefinition
             var cmd = builtinParams.commandBuffer;
             UpdateGlobalConstantBuffer(cmd);
 
-            int currentParamHash = m_Settings.GetHashCode();
-            if (currentParamHash != m_LastPrecomputationParamHash)
+            int currPrecomputationParamHash = m_Settings.GetPrecomputationHashCode();
+            if (currPrecomputationParamHash != m_LastPrecomputationParamHash)
             {
                 // Hash does not match, have to restart the precomputation from scratch.
                 m_LastPrecomputedBounce = 0;
@@ -316,8 +316,8 @@ namespace UnityEngine.Rendering.HighDefinition
                 PrecomputeTables(cmd);
                 m_LastPrecomputedBounce++;
 
-                // Update the hash for the current bounce.
-                m_LastPrecomputationParamHash = currentParamHash;
+                    // Update the hash for the current bounce.
+                    m_LastPrecomputationParamHash = currentParamHash;
 
                 // If the sky is realtime, an upcoming update will update the sky lighting. Otherwise we need to force an update.
                 return builtinParams.updateMode != EnvironmentUpdateMode.Realtime;
@@ -389,6 +389,8 @@ namespace UnityEngine.Rendering.HighDefinition
                 s_PbrSkyMaterialProperties.SetTexture(HDShaderIDs._SpaceEmissionTexture, m_Settings.spaceEmissionTexture.value);
             }
             s_PbrSkyMaterialProperties.SetInt(HDShaderIDs._HasSpaceEmissionTexture, hasSpaceEmissionTexture);
+
+            s_PbrSkyMaterialProperties.SetInt(HDShaderIDs._RenderSunDisk, renderSunDisk ? 1 : 0);
 
             CoreUtils.DrawFullScreen(builtinParams.commandBuffer, s_PbrSkyMaterial, s_PbrSkyMaterialProperties, renderForCubemap ? 0 : 1);
         }
