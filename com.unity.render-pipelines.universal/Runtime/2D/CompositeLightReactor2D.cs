@@ -9,16 +9,14 @@ namespace UnityEngine.Experimental.Rendering.Universal
     [ExecuteInEditMode]
     public class CompositeLightReactor2D : ShadowCasterGroup2D
     {
-        // Start is called before the first frame update
-        void Start()
+        protected void OnEnable()
         {
-
+            ShadowCasterGroup2DManager.AddGroup(this);
         }
 
-        // Update is called once per frame
-        void Update()
+        protected void OnDisable()
         {
-
+            ShadowCasterGroup2DManager.RemoveGroup(this);
         }
     }
 }
