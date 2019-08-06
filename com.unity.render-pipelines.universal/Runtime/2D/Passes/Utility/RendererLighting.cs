@@ -188,7 +188,7 @@ namespace UnityEngine.Experimental.Rendering.Universal
 
                                         //// Check to see if our shadow caster is inside the lights bounds...
                                         //if (sqDist < (shadowRadiusSq + lightRadiusSq))
-                                        if(shadowCaster.castsShadows)
+                                        if(shadowCaster.castsShadows && shadowCaster.shadowMode != LightReactor2D.ShadowModes.RendererOnly)
                                             cmdBuffer.DrawMesh(shadowCaster.mesh, Matrix4x4.TRS(shadowCaster.transform.position, shadowCaster.transform.rotation, shadowCaster.transform.lossyScale), shadowMaterial);
 
 
