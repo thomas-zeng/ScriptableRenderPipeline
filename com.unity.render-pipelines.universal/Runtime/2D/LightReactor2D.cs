@@ -47,12 +47,15 @@ namespace UnityEngine.Experimental.Rendering.Universal
 
         int m_PreviousShadowGroup = 0;
         bool m_PreviousCastsShadows = true;
+        Transform m_PreviousParent;
 
 
         private void Awake()
         {
             if (m_ShapePath == null || m_ShapePath.Length == 0)
                 m_ShapePath = new Vector3[] { new Vector3(-0.5f, -0.5f), new Vector3(0.5f, -0.5f), new Vector3(0.5f, 0.5f), new Vector3(-0.5f, 0.5f) };
+
+            m_PreviousParent = transform.parent;
         }
 
         private void OnStart()
@@ -89,13 +92,24 @@ namespace UnityEngine.Experimental.Rendering.Universal
             if (rebuildMesh)
                 ShadowUtility.GenerateShadowMesh(ref m_Mesh, m_ShapePath);
 
+
+            if (LightUtility.CheckForChange(transform.parent, ref m_PreviousParent))
+            {
+                if(m_ShadowCasterGroup != null)
+                    LightUtility.RemoveLightReactorFromGroup(this, m_ShadowCasterGroup);
+
+                LightUtility.AddToLightReactorToGroup(this, out m_ShadowCasterGroup);
+            }
+
+
             if (LightUtility.CheckForChange(m_ShadowGroup, ref m_PreviousShadowGroup))
             {
                 ShadowCasterGroup2DManager.RemoveGroup(this);
                 ShadowCasterGroup2DManager.AddGroup(this);
             }
 
-            if(LightUtility.CheckForChange(m_CastsShadows, ref m_PreviousCastsShadows))
+
+            if (LightUtility.CheckForChange(m_CastsShadows, ref m_PreviousCastsShadows))
             {
                 if(m_CastsShadows)
                     ShadowCasterGroup2DManager.AddGroup(this);
