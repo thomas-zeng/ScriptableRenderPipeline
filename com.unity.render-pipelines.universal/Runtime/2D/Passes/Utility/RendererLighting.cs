@@ -198,7 +198,7 @@ namespace UnityEngine.Experimental.Rendering.Universal
                                             if (renderer != null)
                                             {
                                                 if (!shadowCaster.selfShadows)
-                                                    cmdBuffer.DrawRenderer(renderer, new Material(removeSelfShadowMaterial));
+                                                    cmdBuffer.DrawRenderer(renderer, removeSelfShadowMaterial);
                                                 else
                                                     cmdBuffer.DrawRenderer(renderer, shadowMaterial, 0, 1);
                                             }

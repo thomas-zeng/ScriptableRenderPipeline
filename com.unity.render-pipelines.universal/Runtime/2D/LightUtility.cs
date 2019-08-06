@@ -297,16 +297,21 @@ namespace UnityEngine.Experimental.Rendering.Universal
         }
 
 
-        public static void AddToLightReactorToGroup(LightReactor2D shadowCaster, out ShadowCasterGroup2D shadowCasterGroup)
+        public static bool AddToLightReactorToGroup(LightReactor2D shadowCaster, ref ShadowCasterGroup2D shadowCasterGroup)
         {
-            shadowCasterGroup = shadowCaster.GetComponentInParent(typeof(CompositeLightReactor2D)) as ShadowCasterGroup2D;
-            if (shadowCasterGroup == null)
-                shadowCasterGroup = shadowCaster.GetComponent<LightReactor2D>();
+            // We should redo this
+            ShadowCasterGroup2D newShadowCasterGroup = shadowCaster.GetComponentInParent(typeof(CompositeLightReactor2D)) as ShadowCasterGroup2D;
+            if (newShadowCasterGroup == null)
+                newShadowCasterGroup = shadowCaster.GetComponent<LightReactor2D>();
 
-            if (shadowCasterGroup != null)
+            if (newShadowCasterGroup != null && shadowCasterGroup != newShadowCasterGroup)
             {
-                shadowCasterGroup.RegisterShadowCaster2D(shadowCaster);
+                newShadowCasterGroup.RegisterShadowCaster2D(shadowCaster);
+                shadowCasterGroup = newShadowCasterGroup;
+                return true;
             }
+
+            return false;
         }
 
         public static void RemoveLightReactorFromGroup(LightReactor2D shadowCaster, ShadowCasterGroup2D shadowCasterGroup)

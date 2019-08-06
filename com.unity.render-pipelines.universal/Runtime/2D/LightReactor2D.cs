@@ -22,6 +22,7 @@ namespace UnityEngine.Experimental.Rendering.Universal
         [SerializeField] int[] m_ApplyToSortingLayers = new int[1];     // These are sorting layer IDs. If we need to update this at runtime make sure we add code to update global lights
 
         internal ShadowCasterGroup2D m_ShadowCasterGroup = null;
+        internal ShadowCasterGroup2D m_PreviousShadowCasterGroup = null;
 
         [SerializeField] Vector3[] m_ShapePath;
         [SerializeField] int m_ShapePathHash = 0;
@@ -74,7 +75,7 @@ namespace UnityEngine.Experimental.Rendering.Universal
                 m_PreviousPathHash = m_ShapePathHash;
             }
 
-            LightUtility.AddToLightReactorToGroup(this, out m_ShadowCasterGroup);
+            LightUtility.AddToLightReactorToGroup(this, ref m_ShadowCasterGroup);
             ShadowCasterGroup2DManager.AddGroup(this);
         }
 
@@ -92,14 +93,10 @@ namespace UnityEngine.Experimental.Rendering.Universal
             if (rebuildMesh)
                 ShadowUtility.GenerateShadowMesh(ref m_Mesh, m_ShapePath);
 
-
-            if (LightUtility.CheckForChange(transform.parent, ref m_PreviousParent))
-            {
-                if(m_ShadowCasterGroup != null)
-                    LightUtility.RemoveLightReactorFromGroup(this, m_ShadowCasterGroup);
-
-                LightUtility.AddToLightReactorToGroup(this, out m_ShadowCasterGroup);
-            }
+            m_PreviousShadowCasterGroup = m_ShadowCasterGroup;
+            bool addedToNewGroup = LightUtility.AddToLightReactorToGroup(this, ref m_ShadowCasterGroup);
+            if (addedToNewGroup && m_ShadowCasterGroup != null)
+                LightUtility.RemoveLightReactorFromGroup(this, m_PreviousShadowCasterGroup);
 
 
             if (LightUtility.CheckForChange(m_ShadowGroup, ref m_PreviousShadowGroup))
