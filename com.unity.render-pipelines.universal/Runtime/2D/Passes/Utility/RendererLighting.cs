@@ -188,7 +188,21 @@ namespace UnityEngine.Experimental.Rendering.Universal
 
                                         //// Check to see if our shadow caster is inside the lights bounds...
                                         //if (sqDist < (shadowRadiusSq + lightRadiusSq))
-                                        cmdBuffer.DrawMesh(shadowCaster.mesh, Matrix4x4.TRS(shadowCaster.transform.position, shadowCaster.transform.rotation, shadowCaster.transform.lossyScale), shadowMaterial);
+                                        if(shadowCaster.castsShadows)
+                                            cmdBuffer.DrawMesh(shadowCaster.mesh, Matrix4x4.TRS(shadowCaster.transform.position, shadowCaster.transform.rotation, shadowCaster.transform.lossyScale), shadowMaterial);
+
+
+                                        if(shadowCaster.shadowMode != LightReactor2D.ShadowModes.CasterOnly) 
+                                        {
+                                            Renderer renderer = shadowCaster.GetComponent<Renderer>();
+                                            if (renderer != null)
+                                            {
+                                                if (!shadowCaster.selfShadows)
+                                                    cmdBuffer.DrawRenderer(renderer, new Material(removeSelfShadowMaterial));
+                                                else
+                                                    cmdBuffer.DrawRenderer(renderer, shadowMaterial, 0, 1);
+                                            }
+                                        }
                                     }
                                     else
                                     {
@@ -196,25 +210,6 @@ namespace UnityEngine.Experimental.Rendering.Universal
                                     }
                                 }
 
-                                LightReactor2D lightReactor = shadowCasterGroup as LightReactor2D;
-                                if (lightReactor != null)
-                                {
-                                    if (lightReactor.shadowMode != LightReactor2D.ShadowModes.CasterOnly)
-                                    {
-                                        Renderer renderer = lightReactor.GetComponent<Renderer>();
-                                        if (renderer != null)
-                                        {
-                                            shadowGroupCanBeRendered = light.IsLitLayer(renderer.sortingLayerID);
-                                            if (shadowGroupCanBeRendered)  // This probably is wrong...
-                                            {
-                                                if (!lightReactor.selfShadows)
-                                                    cmdBuffer.DrawRenderer(renderer, new Material(removeSelfShadowMaterial));
-                                                else
-                                                    cmdBuffer.DrawRenderer(renderer, shadowMaterial, 0, 1);
-                                            }
-                                        }
-                                    }
-                                }
                             }
                         }
                     }
