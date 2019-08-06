@@ -7,7 +7,7 @@ namespace UnityEngine.Experimental.Rendering.Universal
 {
 
     [ExecuteInEditMode]
-    public class CompositeLightReactor2D : MonoBehaviour//, IShadowCasterGroup2D
+    public class CompositeLightReactor2D : ShadowCasterGroup2D
     {
         // Start is called before the first frame update
         void Start()

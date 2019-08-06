@@ -278,7 +278,7 @@ namespace UnityEngine.Experimental.Rendering.Universal
         }
 
 
-        public static void AddShadowCasterGroupToList(IShadowCasterGroup2D shadowCaster, List<IShadowCasterGroup2D> list)
+        public static void AddShadowCasterGroupToList(ShadowCasterGroup2D shadowCaster, List<ShadowCasterGroup2D> list)
         {
             int positionToInsert = 0;
             for (positionToInsert = 0; positionToInsert < list.Count; positionToInsert++)
@@ -291,22 +291,25 @@ namespace UnityEngine.Experimental.Rendering.Universal
         }
 
 
-        public static void RemoveShadowCasterFromList(IShadowCasterGroup2D shadowCaster, List<IShadowCasterGroup2D> list)
+        public static void RemoveShadowCasterFromList(ShadowCasterGroup2D shadowCaster, List<ShadowCasterGroup2D> list)
         {
             list.Remove(shadowCaster);
         }
 
 
-        public static void AddToShadowCasterToGroup(ShadowCaster2D shadowCaster, out IShadowCasterGroup2D shadowCasterGroup)
+        public static void AddToLightReactorToGroup(LightReactor2D shadowCaster, out ShadowCasterGroup2D shadowCasterGroup)
         {
-            shadowCasterGroup = shadowCaster.GetComponentInParent(typeof(IShadowCasterGroup2D)) as IShadowCasterGroup2D;
+            shadowCasterGroup = shadowCaster.GetComponentInParent(typeof(CompositeLightReactor2D)) as ShadowCasterGroup2D;
+            if (shadowCasterGroup == null)
+                shadowCasterGroup = shadowCaster.GetComponent<LightReactor2D>();
+
             if (shadowCasterGroup != null)
             {
                 shadowCasterGroup.RegisterShadowCaster2D(shadowCaster);
             }
         }
 
-        public static void RemoveShadowCasterFromGroup(ShadowCaster2D shadowCaster, IShadowCasterGroup2D shadowCasterGroup)
+        public static void RemoveLightReactorFromGroup(LightReactor2D shadowCaster, ShadowCasterGroup2D shadowCasterGroup)
         {
             if(shadowCasterGroup != null)
                 shadowCasterGroup.UnregisterShadowCaster2D(shadowCaster);

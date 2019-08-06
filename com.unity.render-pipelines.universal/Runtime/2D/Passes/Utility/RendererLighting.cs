@@ -152,34 +152,19 @@ namespace UnityEngine.Experimental.Rendering.Universal
 
                 Material shadowMaterial = GetShadowMaterial(1);
                 Material removeSelfShadowMaterial = GetRemoveSelfShadowMaterial(1);
-                List<IShadowCasterGroup2D> shadowCasterGroups = ShadowCasterGroup2DManager.shadowCasterGroups;
+                List<ShadowCasterGroup2D> shadowCasterGroups = ShadowCasterGroup2DManager.shadowCasterGroups;
                 if (shadowCasterGroups != null && shadowCasterGroups.Count > 0)
                 {
                     int previousShadowGroupIndex = -1;
                     int incrementingGroupIndex = 0;
                     for (int group = 0; group < shadowCasterGroups.Count; group++)
                     {
-                        IShadowCasterGroup2D shadowCasterGroup = shadowCasterGroups[group];
-
+                        ShadowCasterGroup2D shadowCasterGroup = shadowCasterGroups[group];
 
                         bool shadowGroupCanBeRendered = true;
-                        LightReactor2D lightReactor = shadowCasterGroup as LightReactor2D;
-                        if (lightReactor != null)
-                        {
-                            if (lightReactor.shadowMode == LightReactor2D.ShadowModes.CasterOnly)
-                            {
-                                //light.IsLitLayer(lightReactor.sortingLayerID);
-                            }
-                            else
-                            {
-                                Renderer renderer = lightReactor.GetComponent<Renderer>();
-                                shadowGroupCanBeRendered = light.IsLitLayer(renderer.sortingLayerID);
-                            }
-                        }
-
                         if (shadowGroupCanBeRendered)
                         {
-                            List<ShadowCaster2D> shadowCasters = shadowCasterGroup.GetShadowCasters();
+                            List<LightReactor2D> shadowCasters = shadowCasterGroup.GetShadowCasters();
 
                             int shadowGroupIndex = shadowCasterGroup.GetShadowGroup();
                             if (LightUtility.CheckForChange(shadowGroupIndex, ref previousShadowGroupIndex) || shadowGroupIndex == 0)
@@ -193,7 +178,7 @@ namespace UnityEngine.Experimental.Rendering.Universal
                             {
                                 for (int i = 0; i < shadowCasters.Count; i++)
                                 {
-                                    ShadowCaster2D shadowCaster = shadowCasters[i];
+                                    LightReactor2D shadowCaster = (LightReactor2D)shadowCasters[i];
 
                                     if (shadowCaster != null && shadowMaterial != null)
                                     {
@@ -211,16 +196,23 @@ namespace UnityEngine.Experimental.Rendering.Universal
                                     }
                                 }
 
+                                LightReactor2D lightReactor = shadowCasterGroup as LightReactor2D;
                                 if (lightReactor != null)
                                 {
-                                    Renderer renderer = lightReactor.GetComponent<Renderer>();
-
-                                    if (renderer != null)
+                                    if (lightReactor.shadowMode != LightReactor2D.ShadowModes.CasterOnly)
                                     {
-                                        if (!lightReactor.selfShadows)
-                                            cmdBuffer.DrawRenderer(renderer, new Material(removeSelfShadowMaterial));
-                                        else
-                                            cmdBuffer.DrawRenderer(renderer, shadowMaterial, 0, 1);
+                                        Renderer renderer = lightReactor.GetComponent<Renderer>();
+                                        if (renderer != null)
+                                        {
+                                            shadowGroupCanBeRendered = light.IsLitLayer(renderer.sortingLayerID);
+                                            if (shadowGroupCanBeRendered)  // This probably is wrong...
+                                            {
+                                                if (!lightReactor.selfShadows)
+                                                    cmdBuffer.DrawRenderer(renderer, new Material(removeSelfShadowMaterial));
+                                                else
+                                                    cmdBuffer.DrawRenderer(renderer, shadowMaterial, 0, 1);
+                                            }
+                                        }
                                     }
                                 }
                             }

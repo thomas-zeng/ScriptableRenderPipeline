@@ -70,21 +70,6 @@ namespace UnityEditor.Experimental.Rendering.Universal
             Analytics.Renderer2DAnalytics.instance.SendData(Analytics.AnalyticsDataTypes.k_LightDataString, lightData);
         }
 
-        static GameObject CreateShadowCaster2D(MenuCommand menuCommand, string name)
-        {
-            GameObject go = ObjectFactory.CreateGameObject(name, typeof(ShadowCaster2D));
-
-            var parent = menuCommand.context as GameObject;
-            Place(go, parent);
-
-            return go;
-
-            //Analytics.Light2DData lightData = new Analytics.Light2DData();
-            //lightData.was_create_event = true;
-            //lightData.instance_id = light2D.GetInstanceID();
-            //lightData.light_type = light2D.lightType;
-            //Analytics.Renderer2DAnalytics.instance.SendData(Analytics.AnalyticsDataTypes.k_LightDataString, lightData);
-        }
 
         static bool CreateLightValidation()
         {

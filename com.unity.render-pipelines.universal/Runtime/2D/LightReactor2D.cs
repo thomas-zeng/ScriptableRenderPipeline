@@ -7,7 +7,7 @@ namespace UnityEngine.Experimental.Rendering.Universal
 
     [ExecuteInEditMode]
     [AddComponentMenu("Rendering/2D/Light Reactor 2D (Experimental)")]
-    public class LightReactor2D : ShadowCaster2D, IShadowCasterGroup2D
+    public class LightReactor2D : ShadowCasterGroup2D
     {
         public enum ShadowModes
         {
@@ -17,12 +17,28 @@ namespace UnityEngine.Experimental.Rendering.Universal
         }
 
         [SerializeField] ShadowModes m_ShadowMode;
-        [SerializeField] int m_ShadowGroup = 0;
         [SerializeField] bool m_SelfShadows = false;
         [SerializeField] bool m_CastsShadows = true;
+        [SerializeField] int[] m_ApplyToSortingLayers = new int[1];     // These are sorting layer IDs. If we need to update this at runtime make sure we add code to update global lights
 
-        List<ShadowCaster2D> m_ShadowCasters;
+        internal ShadowCasterGroup2D m_ShadowCasterGroup = null;
+
+        [SerializeField] Vector3[] m_ShapePath;
+        [SerializeField] int m_ShapePathHash = 0;
+        [SerializeField] int m_PreviousPathHash = 0;
+        [SerializeField] Mesh m_Mesh;
+
+        internal Mesh mesh => m_Mesh;
+        internal Vector3[] shapePath => m_ShapePath;
+        internal int shapePathHash { get { return m_ShapePathHash; } set { m_ShapePathHash = value; } }
+
+        Mesh m_ShadowMesh;
+
+
+
         Renderer m_Renderer;
+
+        internal int[] applyToSortingLayers => m_ApplyToSortingLayers;
 
         public ShadowModes shadowMode => m_ShadowMode;
         public bool selfShadows => m_SelfShadows;
@@ -32,24 +48,11 @@ namespace UnityEngine.Experimental.Rendering.Universal
         int m_PreviousShadowGroup = 0;
         bool m_PreviousCastsShadows = true;
 
-        public List<ShadowCaster2D> GetShadowCasters() { return m_ShadowCasters; }
 
-        public int GetShadowGroup() { return m_ShadowGroup; }
-
-        public Renderer GetRenderer() { return m_Renderer; }
-
-        public void RegisterShadowCaster2D(ShadowCaster2D shadowCaster2D)
+        private void Awake()
         {
-            if (m_ShadowCasters == null)
-                m_ShadowCasters = new List<ShadowCaster2D>();
-
-            m_ShadowCasters.Add(shadowCaster2D);
-        }
-
-        public void UnregisterShadowCaster2D(ShadowCaster2D shadowCaster2D)
-        {
-            if(m_ShadowCasters != null)
-                m_ShadowCasters.Remove(shadowCaster2D);
+            if (m_ShapePath == null || m_ShapePath.Length == 0)
+                m_ShapePath = new Vector3[] { new Vector3(-0.5f, -0.5f), new Vector3(0.5f, -0.5f), new Vector3(0.5f, 0.5f), new Vector3(-0.5f, 0.5f) };
         }
 
         private void OnStart()
@@ -59,22 +62,32 @@ namespace UnityEngine.Experimental.Rendering.Universal
                 m_ShadowMode = ShadowModes.CasterOnly;
         }
 
-        new private void OnEnable()
+        protected void OnEnable()
         {
-            base.OnEnable();
+            if (m_Mesh == null)
+            {
+                m_Mesh = new Mesh();
+                ShadowUtility.GenerateShadowMesh(ref m_Mesh, m_ShapePath);
+                m_PreviousPathHash = m_ShapePathHash;
+            }
+
+            LightUtility.AddToLightReactorToGroup(this, out m_ShadowCasterGroup);
             ShadowCasterGroup2DManager.AddGroup(this);
         }
 
-        new private void OnDisable()
+        protected void OnDisable()
         {
-            base.OnDisable();
+            LightUtility.RemoveLightReactorFromGroup(this, m_ShadowCasterGroup);
             ShadowCasterGroup2DManager.RemoveGroup(this);
         }
 
-
-        new public void Update()
+        public void Update()
         {
-            base.Update();
+            bool rebuildMesh = false;
+            rebuildMesh |= LightUtility.CheckForChange(m_ShapePathHash, ref m_PreviousPathHash);
+
+            if (rebuildMesh)
+                ShadowUtility.GenerateShadowMesh(ref m_Mesh, m_ShapePath);
 
             if (LightUtility.CheckForChange(m_ShadowGroup, ref m_PreviousShadowGroup))
             {

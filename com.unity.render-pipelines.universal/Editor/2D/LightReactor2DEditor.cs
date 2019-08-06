@@ -11,7 +11,7 @@ namespace UnityEditor.Experimental.Rendering.Universal
 {
     [CustomEditor(typeof(LightReactor2D))]
     [CanEditMultipleObjects]
-    internal class LightReactor2DEditor : ShadowCaster2DEditor
+    internal class LightReactor2DEditor : PathComponentEditor<ScriptablePath>
     {
         [EditorTool("Edit Shadow Caster Shape", typeof(LightReactor2D))]
         class LightReactor2DShadowCasterShapeTool : ShadowCaster2DShapeTool { };
@@ -31,18 +31,11 @@ namespace UnityEditor.Experimental.Rendering.Universal
         SerializedProperty m_ReceivesShadows;
         string[] m_PopupContent;
 
-        // This should probably be moved in to a class
-        Rect m_SortingLayerDropdownRect = new Rect();
-        SortingLayer[] m_AllSortingLayers;
-        GUIContent[] m_AllSortingLayerNames;
-        List<int> m_ApplyToSortingLayersList;
+        SortingLayerDropDown m_SortingLayerDropDown;
 
 
         public void OnEnable()
         {
-            ShadowCaster2DOnEnable();
-
-
             m_ShadowMode = serializedObject.FindProperty("m_ShadowMode");
             m_ShadowCasterGroup = serializedObject.FindProperty("m_ShadowGroup");
             m_SelfShadows = serializedObject.FindProperty("m_SelfShadows");
@@ -53,7 +46,37 @@ namespace UnityEditor.Experimental.Rendering.Universal
             m_PopupContent[0] = "Auto Assign";
             for(int i=1;i<popupElements;i++)
                 m_PopupContent[i] = i.ToString();
+
+            m_SortingLayerDropDown = new SortingLayerDropDown();
+            m_SortingLayerDropDown.OnEnable(serializedObject);
+
         }
+
+        public void ShadowCaster2DSceneGUI()
+        {
+            LightReactor2D shadowCaster = target as LightReactor2D;
+
+            Transform t = shadowCaster.transform;
+            Vector3[] shape = shadowCaster.shapePath;
+            Handles.color = Color.white;
+
+            for (int i = 0; i < shape.Length - 1; ++i)
+            {
+                //Handles.DrawLine(t.TransformPoint(shape[i]), t.TransformPoint(shape[i + 1]));
+                Handles.DrawAAPolyLine(4, new Vector3[] { t.TransformPoint(shape[i]), t.TransformPoint(shape[i + 1]) });
+            }
+
+            if (shape.Length > 1)
+                Handles.DrawAAPolyLine(4, new Vector3[] { t.TransformPoint(shape[shape.Length - 1]), t.TransformPoint(shape[0]) });
+        }
+
+        public void ShadowCaster2DInspectorGUI<T>() where T : ShadowCaster2DShapeTool
+        {
+            DoEditButton<T>(PathEditorToolContents.icon, "Edit Shape");
+            DoPathInspector<T>();
+            DoSnappingInspector<T>();
+        }
+
 
         public void OnSceneGUI()
         {
@@ -68,6 +91,8 @@ namespace UnityEditor.Experimental.Rendering.Universal
             EditorGUILayout.PropertyField(m_SelfShadows, Styles.selfShadows);
             EditorGUILayout.PropertyField(m_CastsShadows, Styles.castsShadows);
             serializedObject.ApplyModifiedProperties();
+
+            m_SortingLayerDropDown.OnTargetSortingLayers(serializedObject, targets);
 
             ShadowCaster2DInspectorGUI<LightReactor2DShadowCasterShapeTool>();
         }
