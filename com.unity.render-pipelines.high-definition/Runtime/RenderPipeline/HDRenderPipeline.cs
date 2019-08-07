@@ -1698,6 +1698,7 @@ namespace UnityEngine.Rendering.HighDefinition
             using (new ProfilingSample(cmd, "Volume Update", CustomSamplerId.VolumeUpdate.GetSampler()))
             {
                 VolumeManager.instance.Update(hdCamera.volumeAnchor, hdCamera.volumeLayerMask);
+                CustomPassVolume.Update(hdCamera.volumeAnchor);
             }
 
             // Do anything we need to do upon a new frame.
@@ -2009,6 +2010,8 @@ namespace UnityEngine.Rendering.HighDefinition
                 RenderForwardEmissive(cullingResults, hdCamera, renderContext, cmd);
 
                 RenderSky(hdCamera, cmd);
+
+                RenderCustomPass(renderContext, cullingResults, CustomPassInjectionPoint.BeforeTransparent);
 
                 RenderTransparentDepthPrepass(cullingResults, hdCamera, renderContext, cmd);
 
@@ -3181,6 +3184,16 @@ namespace UnityEngine.Rendering.HighDefinition
                 var rendererList = RendererList.Create(CreateOpaqueRendererListDesc(cullResults, hdCamera.camera, m_ForwardErrorPassNames, renderQueueRange: RenderQueueRange.all, overrideMaterial: m_ErrorMaterial));
                 HDUtils.DrawRendererList(renderContext, cmd, rendererList);
             }
+        }
+
+        void RenderCustomPass(ScriptableRenderContext context, CullingResults cullingResults, CustomPassInjectionPoint injectionPoint)
+        {
+            var customPass = CustomPassVolume.GetActivePassVolume(injectionPoint);
+
+            if (customPass == null)
+                return;
+
+            customPass.Execute(context, cullingResults);
         }
 
         void RenderTransparentDepthPrepass(CullingResults cull, HDCamera hdCamera, ScriptableRenderContext renderContext, CommandBuffer cmd)
