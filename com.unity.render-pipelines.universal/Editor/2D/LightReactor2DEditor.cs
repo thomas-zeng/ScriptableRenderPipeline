@@ -18,29 +18,29 @@ namespace UnityEditor.Experimental.Rendering.Universal
 
         private static class Styles
         {
-            public static GUIContent shadowMode = EditorGUIUtility.TrTextContent("Shadow Mode", "Specifies if what will be cast by this light reactor");
+            public static GUIContent shadowMode = EditorGUIUtility.TrTextContent("Use Renderer Silhouette", "Toggles the use of the renderer as part of shadow casting");
             public static GUIContent shadowCasterGroup = EditorGUIUtility.TrTextContent("Shadow Caster Group", "Shadow casters in the same group will not shadow each other");
             public static GUIContent selfShadows = EditorGUIUtility.TrTextContent("Self Shadows", "Specifies if this renderer will cast shadows on itself");
             public static GUIContent castsShadows = EditorGUIUtility.TrTextContent("Casts Shadows", "Specifies if this renderer will cast shadows");
         }
 
-        SerializedProperty m_ShadowMode;
+        SerializedProperty m_HasRenderer;
+        SerializedProperty m_UseRendererSilhouette;
+        SerializedProperty m_CastsShadows;
         SerializedProperty m_ShadowCasterGroup;
         SerializedProperty m_SelfShadows;
-        SerializedProperty m_CastsShadows;
         SerializedProperty m_ReceivesShadows;
+
         string[] m_PopupContent;
 
 
         public void OnEnable()
         {
-
-
-            m_ShadowMode = serializedObject.FindProperty("m_ShadowMode");
+            m_UseRendererSilhouette = serializedObject.FindProperty("m_UseRendererSilhouette");
             m_ShadowCasterGroup = serializedObject.FindProperty("m_ShadowGroup");
             m_SelfShadows = serializedObject.FindProperty("m_SelfShadows");
             m_CastsShadows = serializedObject.FindProperty("m_CastsShadows");
-
+            m_HasRenderer = serializedObject.FindProperty("m_HasRenderer"); 
             const int popupElements = 256;
             m_PopupContent = new string[popupElements];
             m_PopupContent[0] = "Auto Assign";
@@ -76,22 +76,30 @@ namespace UnityEditor.Experimental.Rendering.Universal
 
         public void OnSceneGUI()
         {
-            ShadowCaster2DSceneGUI();
+            if (m_CastsShadows.boolValue)
+                ShadowCaster2DSceneGUI();
         }
 
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
 
-            EditorGUILayout.PropertyField(m_ShadowMode, Styles.shadowMode); // This needs to be changed to a popup later...
+            using (new EditorGUI.DisabledScope(!m_HasRenderer.boolValue))
+            {
+                EditorGUILayout.PropertyField(m_UseRendererSilhouette, Styles.shadowMode); // This needs to be changed to a popup later...
+            }
 
-            //m_ShadowCasterGroup.intValue = EditorGUILayout.Popup(Styles.shadowCasterGroup, m_ShadowCasterGroup.intValue, m_PopupContent, GUILayout.Height(40));
-            EditorGUILayout.PropertyField(m_SelfShadows, Styles.selfShadows);
-            if (m_ShadowMode.intValue != (int)LightReactor2D.ShadowModes.RendererOnly)
-                EditorGUILayout.PropertyField(m_CastsShadows, Styles.castsShadows);
+            EditorGUILayout.PropertyField(m_CastsShadows, Styles.castsShadows);
+
+
+            bool hasShadows = m_UseRendererSilhouette.boolValue || m_CastsShadows.boolValue;
+            if (hasShadows)
+                EditorGUILayout.PropertyField(m_SelfShadows, Styles.selfShadows);
+
+            if(m_CastsShadows.boolValue)
+                ShadowCaster2DInspectorGUI<LightReactor2DShadowCasterShapeTool>();
+
             serializedObject.ApplyModifiedProperties();
-
-            ShadowCaster2DInspectorGUI<LightReactor2DShadowCasterShapeTool>();
         }
     }
 }

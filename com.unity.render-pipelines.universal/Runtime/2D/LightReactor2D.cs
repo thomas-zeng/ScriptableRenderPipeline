@@ -9,16 +9,10 @@ namespace UnityEngine.Experimental.Rendering.Universal
     [AddComponentMenu("Rendering/2D/Light Reactor 2D (Experimental)")]
     public class LightReactor2D : ShadowCasterGroup2D
     {
-        public enum ShadowModes
-        {
-            Default,
-            CasterOnly,
-            RendererOnly
-        }
-
-        [SerializeField] ShadowModes m_ShadowMode;
-        [SerializeField] bool m_SelfShadows = false;
+        [SerializeField] bool m_HasRenderer = false;
+        [SerializeField] bool m_UseRendererSilhouette = true;
         [SerializeField] bool m_CastsShadows = true;
+        [SerializeField] bool m_SelfShadows = false;
         [SerializeField] int[] m_ApplyToSortingLayers = new int[1];     // These are sorting layer IDs. If we need to update this at runtime make sure we add code to update global lights
 
         internal ShadowCasterGroup2D m_ShadowCasterGroup = null;
@@ -35,13 +29,11 @@ namespace UnityEngine.Experimental.Rendering.Universal
 
         Mesh m_ShadowMesh;
 
-
-
         Renderer m_Renderer;
 
         internal int[] applyToSortingLayers => m_ApplyToSortingLayers;
 
-        public ShadowModes shadowMode => m_ShadowMode;
+        public bool useRendererSilhouette => m_UseRendererSilhouette;
         public bool selfShadows => m_SelfShadows;
         public bool castsShadows => m_CastsShadows;
 
@@ -62,11 +54,6 @@ namespace UnityEngine.Experimental.Rendering.Universal
 
         protected void OnEnable()
         {
-            m_Renderer = GetComponent<Renderer>();
-            if (m_Renderer == null)
-                m_ShadowMode = ShadowModes.CasterOnly;
-
-
             if (m_Mesh == null)
             {
                 m_Mesh = new Mesh();
@@ -85,6 +72,11 @@ namespace UnityEngine.Experimental.Rendering.Universal
 
         public void Update()
         {
+            m_Renderer = GetComponent<Renderer>();
+            m_HasRenderer = m_Renderer != null;
+            if (!m_HasRenderer)
+                m_UseRendererSilhouette = false;
+
             bool rebuildMesh = false;
             rebuildMesh |= LightUtility.CheckForChange(m_ShapePathHash, ref m_PreviousPathHash);
 
