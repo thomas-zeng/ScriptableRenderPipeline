@@ -110,7 +110,7 @@ namespace UnityEngine.Experimental.Rendering.Universal
             descriptor.autoGenerateMips = false;
             descriptor.depthBufferBits = 24;
             descriptor.msaaSamples = 1;
-            descriptor.graphicsFormat = GraphicsFormat.B8G8R8A8_UNorm;
+            descriptor.graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm;
             descriptor.dimension = TextureDimension.Tex2D;
             descriptor.width = (int)(camera.pixelWidth);
             descriptor.height = (int)(camera.pixelHeight);
