@@ -436,6 +436,8 @@ namespace UnityEngine.Rendering.HighDefinition
         {
             //quick override of all booleans
             overriddenFrameSettings.bitDatas = (overridingFrameSettings.bitDatas & frameSettingsOverideMask.mask) | (~frameSettingsOverideMask.mask & overriddenFrameSettings.bitDatas);
+
+            //other overrides
             if (frameSettingsOverideMask.mask[(uint) FrameSettingsField.LODBias])
                 overriddenFrameSettings.lodBias = overridingFrameSettings.lodBias;
             if (frameSettingsOverideMask.mask[(uint) FrameSettingsField.LODBiasMode])
@@ -444,8 +446,6 @@ namespace UnityEngine.Rendering.HighDefinition
                 overriddenFrameSettings.maximumLODLevel = overridingFrameSettings.maximumLODLevel;
             if (frameSettingsOverideMask.mask[(uint) FrameSettingsField.MaximumLODLevelMode])
                 overriddenFrameSettings.maximumLODLevelMode = overridingFrameSettings.maximumLODLevelMode;
-
-            //override remaining values here if needed
         }
 
         /// <summary>Check FrameSettings with what is supported in RenderPipelineSettings and change value in order to be compatible.</summary>
