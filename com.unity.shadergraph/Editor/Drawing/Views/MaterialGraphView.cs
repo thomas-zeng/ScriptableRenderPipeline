@@ -90,7 +90,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 evt.menu.AppendAction("Convert To/Sub-graph", ConvertToSubgraph, ConvertToSubgraphStatus);
                 evt.menu.AppendAction("Convert To/Inline Node", ConvertToInlineNode, ConvertToInlineNodeStatus);
                 evt.menu.AppendAction("Convert To/Property", ConvertToProperty, ConvertToPropertyStatus);
-                evt.menu.AddSeparator();
+                evt.menu.AppendSeparator();
 
                 evt.menu.AppendAction("Group Selection", _ => GroupSelection(), (a) =>
                 {
