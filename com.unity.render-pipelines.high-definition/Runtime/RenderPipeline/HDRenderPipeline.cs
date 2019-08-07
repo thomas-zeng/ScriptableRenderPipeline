@@ -1779,6 +1779,8 @@ namespace UnityEngine.Rendering.HighDefinition
 
             hdCamera.xr.StartSinglePass(cmd, camera, renderContext);
 
+            RenderCustomPass(renderContext, cmd, hdCamera, cullingResults, CustomPassInjectionPoint.BeforeRendering);
+
             bool shouldRenderMotionVectorAfterGBuffer = RenderDepthPrepass(cullingResults, hdCamera, renderContext, cmd);
             if (!shouldRenderMotionVectorAfterGBuffer)
             {
@@ -2011,7 +2013,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
                 RenderSky(hdCamera, cmd);
 
-                RenderCustomPass(renderContext, cullingResults, CustomPassInjectionPoint.BeforeTransparent);
+                RenderCustomPass(renderContext, cmd, hdCamera, cullingResults, CustomPassInjectionPoint.BeforeTransparent);
 
                 RenderTransparentDepthPrepass(cullingResults, hdCamera, renderContext, cmd);
 
@@ -2077,8 +2079,12 @@ namespace UnityEngine.Rendering.HighDefinition
             // At this point, m_CameraColorBuffer has been filled by either debug views are regular rendering so we can push it here.
             PushColorPickerDebugTexture(cmd, hdCamera, m_CameraColorBuffer);
 
+            RenderCustomPass(renderContext, cmd, hdCamera, cullingResults, CustomPassInjectionPoint.BeforePostProcess);
+
             aovRequest.PushCameraTexture(cmd, AOVBuffers.Color, hdCamera, m_CameraColorBuffer, aovBuffers);
             RenderPostProcess(cullingResults, hdCamera, target.id, renderContext, cmd);
+
+            RenderCustomPass(renderContext, cmd, hdCamera, cullingResults, CustomPassInjectionPoint.AfterPostProcess);
 
             // In developer build, we always render post process in m_AfterPostProcessBuffer at (0,0) in which we will then render debug.
             // Because of this, we need another blit here to the final render target at the right viewport.
@@ -3186,14 +3192,14 @@ namespace UnityEngine.Rendering.HighDefinition
             }
         }
 
-        void RenderCustomPass(ScriptableRenderContext context, CullingResults cullingResults, CustomPassInjectionPoint injectionPoint)
+        void RenderCustomPass(ScriptableRenderContext context, CommandBuffer cmd, HDCamera hdCamera, CullingResults cullingResults, CustomPassInjectionPoint injectionPoint)
         {
             var customPass = CustomPassVolume.GetActivePassVolume(injectionPoint);
 
             if (customPass == null)
                 return;
 
-            customPass.Execute(context, cullingResults);
+            customPass.Execute(context, cmd, hdCamera, cullingResults);
         }
 
         void RenderTransparentDepthPrepass(CullingResults cull, HDCamera hdCamera, ScriptableRenderContext renderContext, CommandBuffer cmd)

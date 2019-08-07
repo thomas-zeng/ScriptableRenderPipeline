@@ -29,11 +29,12 @@ namespace UnityEngine.Rendering.HighDefinition
 
         void OnDisable() => UnRegister(this);
 
-        public void Execute(ScriptableRenderContext renderContext, CullingResults cullingResult)
+        public void Execute(ScriptableRenderContext renderContext, CommandBuffer cmd, HDCamera hdCamera, CullingResults cullingResult)
         {
             foreach (var pass in customPasses)
             {
-                pass.Execute(renderContext, cullingResult);
+                using (new ProfilingSample(cmd, pass.name))
+                    pass.Execute(renderContext, cmd, hdCamera, cullingResult);
             }
         }
 

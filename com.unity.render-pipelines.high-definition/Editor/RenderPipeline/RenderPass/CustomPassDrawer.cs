@@ -51,6 +51,7 @@ namespace UnityEditor.Rendering.HighDefinition
 
 	    // Serialized Properties
 		SerializedProperty      m_Name;
+		SerializedProperty      m_Type;
 
 		// Foldouts
 		SerializedProperty      m_FilterFoldout;
@@ -72,13 +73,17 @@ namespace UnityEditor.Rendering.HighDefinition
 		SerializedProperty      m_WriteDepth;
 		SerializedProperty      m_DepthCompareFunction;
 
+		// Fullscreen pass
+		SerializedProperty		m_FullScreenPassMaterial;
+
 	    private ReorderableList m_ShaderPassesList;
 
 		void FetchPorperties(SerializedProperty property)
 		{
 			m_Name = property.FindPropertyRelative("name");
+			m_Type = property.FindPropertyRelative("type");
 
-		    //Header bools
+		    // Header bools
 			m_FilterFoldout = property.FindPropertyRelative("filterFoldout");
 			m_RendererFoldout = property.FindPropertyRelative("rendererFoldout");
 			m_PassFoldout = property.FindPropertyRelative("passFoldout");
@@ -88,13 +93,18 @@ namespace UnityEditor.Rendering.HighDefinition
 		    m_RenderQueue = m_FilterSettings.FindPropertyRelative("renderQueueType");
 		    m_LayerMask = m_FilterSettings.FindPropertyRelative("layerMask");
 		    m_ShaderPasses = m_FilterSettings.FindPropertyRelative("passNames");
+
 			// Render options
 		    m_OverrideMaterial = property.FindPropertyRelative("overrideMaterial");
 		    m_OverrideMaterialPass = property.FindPropertyRelative("overrideMaterialPassIndex");
+			
 		    // Depth props
 		    m_OverrideDepth = property.FindPropertyRelative("overrideDepth");
 		    m_WriteDepth = property.FindPropertyRelative("writeDepth");
 		    m_DepthCompareFunction = property.FindPropertyRelative("depthCompareFunction");
+
+			// FullScreen pass
+			m_FullScreenPassMaterial = property.FindPropertyRelative("fullscreenPassMaterial");
 		}
 
 	    private void Init(SerializedProperty property)
@@ -138,12 +148,30 @@ namespace UnityEditor.Rendering.HighDefinition
 
 			m_PassFoldout.boolValue = EditorGUI.Foldout(headerRect, m_PassFoldout.boolValue, m_Name.stringValue, true, EditorStyles.boldLabel);
 
-			EditorGUI.PropertyField(rect, m_Name);
-			rect.y += Styles.defaultLineSpace;
-
 			if (m_PassFoldout.boolValue)
 				return;
 
+			EditorGUI.PropertyField(rect, m_Name);
+			rect.y += Styles.defaultLineSpace;
+			
+			EditorGUI.PropertyField(rect, m_Type);
+			rect.y += Styles.defaultLineSpace;
+		
+			CustomPassType	passType = (CustomPassType)m_Type.enumValueIndex;
+
+			if (passType == CustomPassType.Renderers)
+				DoRenderersGUI(property, rect);
+			else
+				DoFullScreenGUI(rect);
+	    }
+
+		void DoFullScreenGUI(Rect rect)
+		{
+			EditorGUI.PropertyField(rect, m_FullScreenPassMaterial);
+		}
+
+		void DoRenderersGUI(SerializedProperty property, Rect rect)
+		{
 			DoFilters(ref rect);
 
 			m_RendererFoldout.boolValue = EditorGUI.Foldout(rect, m_RendererFoldout.boolValue, Styles.renderHeader, true);
@@ -164,7 +192,7 @@ namespace UnityEditor.Rendering.HighDefinition
 			EditorGUI.EndProperty();
 			if (EditorGUI.EndChangeCheck())
 				property.serializedObject.ApplyModifiedProperties();
-	    }
+		}
 
 	    void DoFilters(ref Rect rect)
 	    {
@@ -229,7 +257,7 @@ namespace UnityEditor.Rendering.HighDefinition
 			
 		    if (!firstTime)
 		    {
-				height += Styles.defaultLineSpace; // name
+				height += Styles.defaultLineSpace + Styles.defaultLineSpace; // name + type
 		        height += Styles.defaultLineSpace * (m_FilterFoldout.boolValue ? m_FilterLines : 1);
 		        height += m_FilterFoldout.boolValue ? m_ShaderPassesList.GetHeight() : 0;
 

@@ -83,7 +83,12 @@ namespace UnityEditor.Rendering.HighDefinition
                 EditorGUI.LabelField(rect, k_DefaultListName, EditorStyles.largeLabel);
             };
 
-            m_CustomPassList.drawElementCallback = (rect, index, active, focused) => EditorGUI.PropertyField(rect, passList.GetArrayElementAtIndex(index));
+            m_CustomPassList.drawElementCallback = (rect, index, active, focused) => {
+                EditorGUI.BeginChangeCheck();
+                EditorGUI.PropertyField(rect, passList.GetArrayElementAtIndex(index), true);
+                if (EditorGUI.EndChangeCheck())
+                    m_serializedPassVolumeObject.ApplyModifiedProperties();
+            };
 
             m_CustomPassList.elementHeightCallback = (index) => EditorGUI.GetPropertyHeight(passList.GetArrayElementAtIndex(index));
         }

@@ -95,6 +95,20 @@ namespace UnityEngine.Rendering.HighDefinition
 
         public static int ClampsTransparentRangePriority(int value) => Math.Max(-k_TransparentPriorityQueueRange, Math.Min(value, k_TransparentPriorityQueueRange));
 
+        public static RenderQueueRange GetRange(RenderQueueType type)
+        {
+            switch (type)
+            {
+                case RenderQueueType.Opaque: return k_RenderQueue_AllOpaque;
+                case RenderQueueType.AfterPostProcessOpaque: return k_RenderQueue_AfterPostProcessOpaque;
+                case RenderQueueType.PreRefraction: return k_RenderQueue_PreRefraction;
+                case RenderQueueType.Transparent: return k_RenderQueue_Transparent;
+                case RenderQueueType.LowTransparent: return k_RenderQueue_LowTransparent;
+                case RenderQueueType.AfterPostprocessTransparent: return k_RenderQueue_AfterPostProcessTransparent;
+                default: return k_RenderQueue_All;
+            }
+        }
+
         public static RenderQueueType GetTypeByRenderQueueValue(int renderQueue)
         {
             if (renderQueue == (int)Priority.Background)
