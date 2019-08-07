@@ -54,6 +54,9 @@ namespace UnityEngine.Experimental.Rendering.Universal
             if (s_NormalsTarget.id == 0)
                 s_NormalsTarget.Init("_NormalMap");
 
+            if (s_ShadowsRenderTarget.id == 0)
+                s_ShadowsRenderTarget.Init("_ShadowTex");
+
             // The array size should be determined by the number of 'feature bit' the material index has. See GetLightMaterialIndex().
             // Not all slots must be filled because certain combinations of the feature bits don't make sense (e.g. sprite bit on + shape bit off).
             if (s_LightMaterials == null)
@@ -127,6 +130,7 @@ namespace UnityEngine.Experimental.Rendering.Universal
             }
 
             cmd.ReleaseTemporaryRT(s_NormalsTarget.id);
+            cmd.ReleaseTemporaryRT(s_ShadowsRenderTarget.id);
         }
 
 
