@@ -1,4 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Reflection;
+using System.Linq;
 
 namespace UnityEngine.Rendering.HighDefinition
 {
@@ -212,7 +216,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
     /// <summary>BitField that state which element is overridden.</summary>
     [Serializable]
-    [System.Diagnostics.DebuggerDisplay("{mask.humanizedData}")]
+    [DebuggerDisplay("{mask.humanizedData}")]
     public struct FrameSettingsOverrideMask
     {
         [SerializeField]
@@ -221,7 +225,8 @@ namespace UnityEngine.Rendering.HighDefinition
 
     /// <summary>Per renderer and per frame settings.</summary>
     [Serializable]
-    [System.Diagnostics.DebuggerDisplay("{bitDatas.humanizedData}")]
+    [DebuggerDisplay("{bitDatas.humanizedData}")]
+    [DebuggerTypeProxy(typeof(FrameSettingsDebugView))]
     partial struct FrameSettings
     {
         /// <summary>Default FrameSettings for Camera renderer.</summary>
@@ -583,5 +588,87 @@ namespace UnityEngine.Rendering.HighDefinition
             + lodBiasMode.GetHashCode()
             + maximumLODLevel.GetHashCode()
             + maximumLODLevelMode.GetHashCode();
+
+        #region DebuggerDisplay
+
+        [DebuggerDisplay("{m_Value}", Name = "{m_Label,nq}")]
+        internal class DebuggerEntry
+        {
+            [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+            string m_Label;
+            [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+            object m_Value;
+
+            public DebuggerEntry(string label, object value)
+            {
+                m_Label = label;
+                m_Value = value;
+            }
+        }
+
+        [DebuggerDisplay("", Name = "{m_GroupName,nq}")]
+        internal class DebuggerGroup
+        {
+            [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+            string m_GroupName;
+            
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            public DebuggerEntry[] m_Entries;
+
+            public DebuggerGroup(string groupName, DebuggerEntry[] entries)
+            {
+                m_GroupName = groupName;
+                m_Entries = entries;
+            }
+        }
+
+        internal class FrameSettingsDebugView
+        {
+            const int numberOfNonBitValues = 2;
+
+            FrameSettings m_FrameSettings;
+
+            public FrameSettingsDebugView(FrameSettings frameSettings)
+                => m_FrameSettings = frameSettings;
+
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            public DebuggerGroup[] Keys
+            {
+                get
+                {
+                    // the following cannot really be cached as this class is reconstructed at each code step while debugging
+                    Array bitValues = Enum.GetValues(typeof(FrameSettingsField));
+                    int bitsLength = bitValues.Length;
+
+                    var attributes = new Dictionary<FrameSettingsField, FrameSettingsFieldAttribute>();
+                    var groups = new List<DebuggerGroup>();
+
+                    Type type = typeof(FrameSettingsField);
+                    var noAttribute = new List<FrameSettingsField>();
+                    foreach (FrameSettingsField value in Enum.GetValues(type))
+                    {
+                        attributes[value] = type.GetField(Enum.GetName(type, value)).GetCustomAttribute<FrameSettingsFieldAttribute>();
+                        if (attributes[value] == null)
+                            noAttribute.Add(value);
+                    }
+                    var groupIndexes = attributes.Values.Where(a => a != null).Select(a => a.group).Distinct();
+                    foreach (int groupIndex in groupIndexes)
+                        groups.Add(new DebuggerGroup(FrameSettingsHistory.foldoutNames[groupIndex], attributes?.Where(pair => pair.Value?.group == groupIndex)?.OrderBy(pair => pair.Value.orderInGroup).Select(kvp => new DebuggerEntry(Enum.GetName(typeof(FrameSettingsField), kvp.Key), m_FrameSettings.bitDatas[(uint)kvp.Key])).ToArray()));
+
+                    groups.Add(new DebuggerGroup("Bits without attribute", noAttribute.Where(fs => fs != FrameSettingsField.None)?.Select(fs => new DebuggerEntry(Enum.GetName(typeof(FrameSettingsField), fs), m_FrameSettings.bitDatas[(uint)fs])).ToArray()));
+
+                    groups.Add(new DebuggerGroup("Non Bit data", new DebuggerEntry[] {
+                        new DebuggerEntry("lodBias", m_FrameSettings.lodBias),
+                        new DebuggerEntry("lodBiasMode", m_FrameSettings.lodBiasMode),
+                        new DebuggerEntry("maximumLODLevel", m_FrameSettings.maximumLODLevel),
+                        new DebuggerEntry("maximumLODLevelMode", m_FrameSettings.maximumLODLevelMode),
+                    }));
+
+                    return groups.ToArray();
+                }
+            }
+        }
+
+        #endregion
     }
 }
