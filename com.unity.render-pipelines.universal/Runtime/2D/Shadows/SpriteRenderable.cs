@@ -1,9 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.Experimental.U2D;
 using Unity.Collections;
+using UnityEngine.U2D;
 
 namespace UnityEngine.Experimental.Rendering.Universal
 {
