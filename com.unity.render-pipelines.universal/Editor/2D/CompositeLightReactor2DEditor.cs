@@ -1,22 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering.Universal;
 
 
-namespace UnityEngine.Experimental.Rendering.Universal
+namespace UnityEditor.Experimental.Rendering.Universal
 {
-    public class CompositeLightReactor2DEditor : MonoBehaviour
+
+    [CustomEditor(typeof(CompositeLightReactor2D))]
+    internal class CompositeLightReactor2DEditor : Editor
     {
-        // Start is called before the first frame update
-        void Start()
+        public override void OnInspectorGUI()
         {
-
-        }
-
-        // Update is called once per frame
-        void Update()
-        {
-
         }
     }
 }

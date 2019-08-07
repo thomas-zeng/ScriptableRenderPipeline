@@ -57,7 +57,10 @@ Shader "Hidden/ShadowGroup2D"
 				float softRadius = 0.2;  // This would be equal to the length of the shadow * sin(angle)
 
                 float3 vertexWS = TransformObjectToWorld(v.vertex);  // This should be in world space
-                float3 lightDirection = normalize(_LightPos - vertexWS); // 
+                float3 lightDir = _LightPos - vertexWS;
+                lightDir.z = 0;
+
+                float3 lightDirection = normalize(lightDir);  
 
                 float3 endpoint = vertexWS + (_LightRadius * -lightDirection);
 

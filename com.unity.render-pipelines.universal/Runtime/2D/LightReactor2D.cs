@@ -6,6 +6,7 @@ namespace UnityEngine.Experimental.Rendering.Universal
 {
 
     [ExecuteInEditMode]
+    [DisallowMultipleComponent]
     [AddComponentMenu("Rendering/2D/Light Reactor 2D (Experimental)")]
     public class LightReactor2D : ShadowCasterGroup2D
     {
