@@ -554,9 +554,34 @@ namespace UnityEngine.Rendering.HighDefinition
             Sanitize(ref aggregatedFrameSettings, camera, supportedFeatures);
         }
 
-        public static bool operator ==(FrameSettings a, FrameSettings b) => a.bitDatas == b.bitDatas;
-        public static bool operator !=(FrameSettings a, FrameSettings b) => a.bitDatas != b.bitDatas;
-        public override bool Equals(object obj) => (obj is FrameSettings) && bitDatas.Equals(((FrameSettings)obj).bitDatas);
-        public override int GetHashCode() => -1690259335 + bitDatas.GetHashCode();
+        public static bool operator ==(FrameSettings a, FrameSettings b)
+            => a.bitDatas == b.bitDatas
+            && a.lodBias == b.lodBias
+            && a.lodBiasMode == b.lodBiasMode
+            && a.maximumLODLevel == b.maximumLODLevel
+            && a.maximumLODLevelMode == b.maximumLODLevelMode;
+
+        public static bool operator !=(FrameSettings a, FrameSettings b)
+            => a.bitDatas != b.bitDatas
+            || a.lodBias != b.lodBias
+            || a.lodBiasMode != b.lodBiasMode
+            || a.maximumLODLevel != b.maximumLODLevel
+            || a.maximumLODLevelMode != b.maximumLODLevelMode;
+
+        public override bool Equals(object obj)
+            => (obj is FrameSettings)
+            && bitDatas.Equals(((FrameSettings)obj).bitDatas)
+            && lodBias.Equals(((FrameSettings)obj).lodBias)
+            && lodBiasMode.Equals(((FrameSettings)obj).lodBiasMode)
+            && maximumLODLevel.Equals(((FrameSettings)obj).maximumLODLevel)
+            && maximumLODLevelMode.Equals(((FrameSettings)obj).maximumLODLevelMode);
+        
+        public override int GetHashCode()
+            => -1690259335
+            + bitDatas.GetHashCode()
+            + lodBias.GetHashCode()
+            + lodBiasMode.GetHashCode()
+            + maximumLODLevel.GetHashCode()
+            + maximumLODLevelMode.GetHashCode();
     }
 }
