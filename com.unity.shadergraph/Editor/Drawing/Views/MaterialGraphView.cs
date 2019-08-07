@@ -90,6 +90,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 evt.menu.AppendAction("Convert To/Sub-graph", ConvertToSubgraph, ConvertToSubgraphStatus);
                 evt.menu.AppendAction("Convert To/Inline Node", ConvertToInlineNode, ConvertToInlineNodeStatus);
                 evt.menu.AppendAction("Convert To/Property", ConvertToProperty, ConvertToPropertyStatus);
+                evt.menu.AddSeparator();
 
                 evt.menu.AppendAction("Group Selection", _ => GroupSelection(), (a) =>
                 {
@@ -214,8 +215,6 @@ namespace UnityEditor.ShaderGraph.Drawing
             evt.menu.AppendAction("Precision/Inherit", _ => SetNodePrecisionOnSelection(Precision.Inherit), (a) => inheritPrecisionAction);
             evt.menu.AppendAction("Precision/Float", _ => SetNodePrecisionOnSelection(Precision.Float), (a) => floatPrecisionAction);
             evt.menu.AppendAction("Precision/Half", _ => SetNodePrecisionOnSelection(Precision.Half), (a) => halfPrecisionAction);
-
-            //evt.menu.AppendSeparator();
         }
 
         private void InitializeViewSubMenu(ContextualMenuPopulateEvent evt)
@@ -265,8 +264,6 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             evt.menu.AppendAction(expandPreviewText, _ => SetPreviewExpandedOnSelection(true), (a) => expandPreviewAction);
             evt.menu.AppendAction(collapsePreviewText, _ => SetPreviewExpandedOnSelection(false), (a) => collapsePreviewAction);
-
-            evt.menu.AppendSeparator();
         }
 
         void ChangeCustomNodeColor(DropdownMenuAction menuAction)
@@ -378,7 +375,6 @@ namespace UnityEditor.ShaderGraph.Drawing
             IEnumerable<MaterialNodeView> nodes = selection.Where(x => x is MaterialNodeView).Select(x => x as MaterialNodeView);
 
             graph.owner.RegisterCompleteObjectUndo("Set Precisions");
-            var nodeList = this.Query<MaterialNodeView>().ToList();
             editorView.colorManager.SetNodesDirty(nodes);
 
             foreach (MaterialNodeView selectedNode in nodes)
