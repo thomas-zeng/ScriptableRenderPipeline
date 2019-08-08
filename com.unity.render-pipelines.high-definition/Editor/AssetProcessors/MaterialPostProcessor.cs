@@ -22,6 +22,7 @@ namespace UnityEditor.Rendering.HighDefinition
         [InitializeOnLoadMethod]
         static void ReimportAllMaterials()
         {
+            //This method is called at opening and when HDRP package change (update of manifest.json)
             //Check to see if the upgrader has been run for this project/HDRP version
             PackageManager.PackageInfo hdrpInfo = PackageManager.PackageInfo.FindForAssembly(Assembly.GetAssembly(typeof(HDRenderPipeline)));
             var hdrpVersion = hdrpInfo.version;
@@ -36,7 +37,16 @@ namespace UnityEditor.Rendering.HighDefinition
                     var path = AssetDatabase.GUIDToAssetPath(asset);
                     AssetDatabase.ImportAsset(path);
                 }
-                HDProjectSettings.packageVersionForMaterialUpgrade = hdrpVersion;
+                
+                if (EditorUtility.DisplayDialog("Material migrated",
+                    "The change on used High-Definition Render Pipeline's version can cause materials to update. You need to save your project to definitely apply the update. If you close without saving, you will need to reimport non-updated material for them to work correctly and save project.\nPlease note that downgrade is not supported.",
+                    "Save Project", "Not now"))
+                {
+                    AssetDatabase.SaveAssets();
+
+                    //to prevent data loss, only update the saved version if user applied change
+                    HDProjectSettings.packageVersionForMaterialUpgrade = hdrpVersion;
+                }
             }
         }
     }
