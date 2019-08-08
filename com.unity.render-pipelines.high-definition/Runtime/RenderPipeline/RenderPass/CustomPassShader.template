@@ -1,4 +1,4 @@
-Shader "HDRP/FullScreen/Test"
+Shader "FullScreen/#SCRIPTNAME#"
 {
     HLSLINCLUDE
 
@@ -23,6 +23,13 @@ Shader "HDRP/FullScreen/Test"
     //     float       rawDepth;
     //     float3      worldSpacePosition; // Can be camera-relative
     // };
+
+    // Custom Buffer access:
+    // To sample or load data from the color / depth buffer of the custom target you can use these functions:
+    // float3 LoadCustomColor(uint2 pixelCoords)
+    // float3 SampleCustomColor(float2 uv)
+    // float SampleCustomDepth(float2 uv)
+    // float LoadCustomDepth(uint2 pixelCoords)
 
     // There are also a lot of utility function you can use inside Common.hlsl and Color.hlsl,
     // you can check them out in the source code of the core SRP package.
@@ -51,6 +58,10 @@ Shader "HDRP/FullScreen/Test"
             ZTest Always
             Blend SrcAlpha OneMinusSrcAlpha
             Cull Off
+
+            // Stencil disclaimer: if you want to write to the stencil buffer, your custom pass must
+            // target the custom buffer, not the camera ! If you change the stencil bits of the camera
+            // buffer, trhe HDRP rendering will be screwed.
 
             HLSLPROGRAM
                 #pragma fragment FullScreenPass

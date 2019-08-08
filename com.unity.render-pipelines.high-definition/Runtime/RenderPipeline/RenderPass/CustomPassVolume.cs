@@ -46,13 +46,13 @@ namespace UnityEngine.Rendering.HighDefinition
 
         void OnDisable() => UnRegister(this);
 
-        internal void Execute(ScriptableRenderContext renderContext, CommandBuffer cmd, HDCamera hdCamera, CullingResults cullingResult)
+        internal void Execute(ScriptableRenderContext renderContext, CommandBuffer cmd, HDCamera hdCamera, CullingResults cullingResult, RTHandle cameraColorBuffer, RTHandle cameraDepthBuffer, RTHandle customColorBuffer, RTHandle customDepthBuffer)
         {
             foreach (var pass in customPasses)
             {
                 if (pass != null && pass.settings.enabled)
                     using (new ProfilingSample(cmd, pass.settings.name))
-                        pass.Execute(renderContext, cmd, hdCamera, cullingResult);
+                        pass.ExecuteInternal(renderContext, cmd, hdCamera, cullingResult, cameraColorBuffer, cameraDepthBuffer, customColorBuffer, customDepthBuffer);
             }
         }
 

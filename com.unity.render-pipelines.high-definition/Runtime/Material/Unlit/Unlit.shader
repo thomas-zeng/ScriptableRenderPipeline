@@ -263,6 +263,7 @@ Shader "HDRP/Unlit"
             Name "ForwardOnly"
             Tags { "LightMode" = "ForwardOnly" }
 
+
             Blend [_SrcBlend] [_DstBlend], [_AlphaSrcBlend] [_AlphaDstBlend]
             ZWrite [_ZWrite]
             ZTest [_ZTestDepthEqualForOpaque]
@@ -280,6 +281,7 @@ Shader "HDRP/Unlit"
             HLSLPROGRAM
 
             #pragma multi_compile _ DEBUG_DISPLAY
+            #pragma enable_d3d11_debug_symbols
 
             #ifdef DEBUG_DISPLAY
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.hlsl"

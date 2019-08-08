@@ -25,6 +25,15 @@ namespace UnityEngine.Rendering.HighDefinition
     }
 
     /// <summary>
+    /// Used to select the target buffer when executing the custom pass
+    /// </summary>
+    public enum CustomPassTargetBuffer
+    {
+        Camera,
+        Custom,
+    }
+
+    /// <summary>
     /// Class that holds data and logic for the pass to be executed
     /// </summary>
     [System.Serializable]
@@ -44,9 +53,13 @@ namespace UnityEngine.Rendering.HighDefinition
         [System.Serializable]
         public class CustomPassSettings
         {
-            public string           name = "Custom Pass";
-            public bool             enabled = true;
-            public CustomPassType   type;
+            public string                   name = "Custom Pass";
+            public bool                     enabled = true;
+            public CustomPassType           type;
+            public CustomPassTargetBuffer   targetColorBuffer;
+            public CustomPassTargetBuffer   targetDepthBuffer;
+
+            // TODO: expose clearFlags ?
 
             // Used only for the UI to keep track of the toggle state
             public bool             filterFoldout;
@@ -72,7 +85,25 @@ namespace UnityEngine.Rendering.HighDefinition
 
         // TODO: static factory to create CustomPass (common settings in parameter)
 
-        public virtual void Execute(ScriptableRenderContext renderContext, CommandBuffer cmd, HDCamera camera, CullingResults cullingResult)
+        internal void ExecuteInternal(ScriptableRenderContext renderContext, CommandBuffer cmd, HDCamera camera, CullingResults cullingResult, RTHandle cameraColorBuffer, RTHandle cameraDepthBuffer, RTHandle customColorBuffer, RTHandle customDepthBuffer)
+        {
+            SetCustomPassTarget(cmd, cameraColorBuffer, cameraDepthBuffer, customColorBuffer, customDepthBuffer);
+
+            Execute(renderContext, cmd, camera, cullingResult);
+            
+            // Set back the camera color buffer is we were using a custom buffer as target
+            if (settings.targetDepthBuffer != CustomPassTargetBuffer.Camera)
+                CoreUtils.SetRenderTarget(cmd, cameraColorBuffer);
+        }
+
+        /// <summary>
+        /// Called when your pass needs to be executed by a camera
+        /// </summary>
+        /// <param name="renderContext"></param>
+        /// <param name="cmd"></param>
+        /// <param name="camera"></param>
+        /// <param name="cullingResult"></param>
+        protected virtual void Execute(ScriptableRenderContext renderContext, CommandBuffer cmd, HDCamera camera, CullingResults cullingResult)
         {
             if (settings.type == CustomPassType.Renderers)
                 ExecuteRenderers(renderContext, cmd, camera, cullingResult);
@@ -80,6 +111,20 @@ namespace UnityEngine.Rendering.HighDefinition
                 ExecuteFullScreen(cmd);
         }
 
+        void SetCustomPassTarget(CommandBuffer cmd, RTHandle cameraColorBuffer, RTHandle cameraDepthBuffer, RTHandle customColorBuffer, RTHandle customDepthBuffer)
+        {
+            RTHandle colorBuffer = (settings.targetColorBuffer == CustomPassTargetBuffer.Custom) ? customColorBuffer : cameraColorBuffer;
+            RTHandle depthBuffer = (settings.targetColorBuffer == CustomPassTargetBuffer.Custom) ? customDepthBuffer : cameraDepthBuffer;
+            CoreUtils.SetRenderTarget(cmd, colorBuffer, depthBuffer, ClearFlag.All);
+        }
+
+        /// <summary>
+        /// Execute the pass with the renderers setup
+        /// </summary>
+        /// <param name="renderContext"></param>
+        /// <param name="cmd"></param>
+        /// <param name="hdCamera"></param>
+        /// <param name="cullResults"></param>
         protected void ExecuteRenderers(ScriptableRenderContext renderContext, CommandBuffer cmd, HDCamera hdCamera, CullingResults cullResults)
         {
             ShaderTagId[] unlitShaderTags = {
@@ -103,6 +148,10 @@ namespace UnityEngine.Rendering.HighDefinition
             HDUtils.DrawRendererList(renderContext, cmd, RendererList.Create(result));
         }
 
+        /// <summary>
+        /// Execute the pass with the fullscreen setup
+        /// </summary>
+        /// <param name="cmd"></param>
         protected void ExecuteFullScreen(CommandBuffer cmd)
         {
             if (settings.fullscreenPassMaterial != null)

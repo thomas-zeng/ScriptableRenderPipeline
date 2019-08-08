@@ -53,6 +53,8 @@ namespace UnityEditor.Rendering.HighDefinition
 		SerializedProperty      m_Name;
 		SerializedProperty      m_Type;
 		SerializedProperty      m_Enabled;
+		SerializedProperty      m_TargetColorBuffer;
+		SerializedProperty      m_TargetDepthBuffer;
 
 		// Foldouts
 		SerializedProperty      m_FilterFoldout;
@@ -79,6 +81,8 @@ namespace UnityEditor.Rendering.HighDefinition
 			m_Name = property.FindPropertyRelative("name");
 			m_Type = property.FindPropertyRelative("type");
 			m_Enabled = property.FindPropertyRelative("enabled");
+			m_TargetColorBuffer = property.FindPropertyRelative("targetColorBuffer");
+			m_TargetDepthBuffer = property.FindPropertyRelative("targetDepthBuffer");
 
 		    // Header bools
 			m_FilterFoldout = property.FindPropertyRelative("filterFoldout");
@@ -143,6 +147,12 @@ namespace UnityEditor.Rendering.HighDefinition
 				rect.y += Styles.defaultLineSpace;
 				
 				EditorGUI.PropertyField(rect, m_Type);
+				rect.y += Styles.defaultLineSpace;
+
+				EditorGUI.PropertyField(rect, m_TargetColorBuffer);
+				rect.y += Styles.defaultLineSpace;
+
+				EditorGUI.PropertyField(rect, m_TargetDepthBuffer);
 				rect.y += Styles.defaultLineSpace;
 			
 				CustomPassType	passType = (CustomPassType)m_Type.enumValueIndex;
@@ -292,7 +302,7 @@ namespace UnityEditor.Rendering.HighDefinition
 			
 		    if (!firstTime)
 		    {
-				height += Styles.defaultLineSpace + Styles.defaultLineSpace; // name + type
+				height += Styles.defaultLineSpace * 4; // name + type + target buffers
 		        height += Styles.defaultLineSpace * (m_FilterFoldout.boolValue ? m_FilterLines : 1);
 
 				if (type == CustomPassType.Renderers)
