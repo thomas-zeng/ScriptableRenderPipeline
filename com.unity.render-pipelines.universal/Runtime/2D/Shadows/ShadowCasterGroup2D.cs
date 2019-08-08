@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace UnityEngine.Experimental.Rendering.Universal
 {
-    public class ShadowCasterGroup2D : MonoBehaviour
+    public abstract class ShadowCasterGroup2D : MonoBehaviour
     {
         [SerializeField] internal int m_ShadowGroup = 0;
         List<LightReactor2D> m_ShadowCasters;
