@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [7.1.1] - 2019-XX-XX
 
 ### Added
+- Enabled single-pass instancing support for XR SDK with new API cmd.SetInstanceMultiplier()
 
 ### Fixed
 - Fixed wizard infinite loop on cancellation.
@@ -14,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - Update Wizard layout.
 
+- Replaced usage of ENABLE_VR in XRSystem.cs by version defines based on the presence of the built-in VR and XR modules
 
 ## [7.0.1] - 2019-07-25
 
