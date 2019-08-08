@@ -57,6 +57,7 @@ namespace UnityEditor.Rendering.HighDefinition
                     continue;
 
                 ShaderPathID id = HDEditorUtils.GetShaderEnumFromShader(material.shader);
+                var migrations = k_Migrations[id];
                 var wasUpgraded = false;
                 var assetVersions = AssetDatabase.LoadAllAssetsAtPath(asset);
                 AssetVersion assetVersion = null;
@@ -75,7 +76,8 @@ namespace UnityEditor.Rendering.HighDefinition
                     assetVersion = ScriptableObject.CreateInstance<AssetVersion>();
                     if (s_CreatedAssets.Contains(asset))
                     {
-                        //set to latest asset version
+                        //set to latest asset version (migration.length)
+                        assetVersion.version = migrations.Length;
                         s_CreatedAssets.Remove(asset);
                     }
                     else
@@ -86,11 +88,55 @@ namespace UnityEditor.Rendering.HighDefinition
                 }
 
                 //upgrade
+                while (assetVersion.version < migrations.Length)
+                {
+                    migrations[assetVersion.version](material);
+                    assetVersion.version++;
+                    wasUpgraded = true;
+                }
 
                 if (wasUpgraded)
                     EditorUtility.SetDirty(assetVersion);
             }
         }
 
+        // /!\ NEVER change order of migration function. Only add at end !
+        static readonly Dictionary<ShaderPathID, Action<Material>[]> k_Migrations = new Dictionary<ShaderPathID, Action<Material>[]>
+        {
+            { ShaderPathID.Lit, new Action<Material>[] { /* EmissiveIntensityToColor, SecondMigrationStep, ... */ } },
+            { ShaderPathID.LitTesselation, new Action<Material>[] {} },
+            { ShaderPathID.LayeredLit, new Action<Material>[] {} },
+            { ShaderPathID.LayeredLitTesselation, new Action<Material>[] {} },
+            { ShaderPathID.StackLit, new Action<Material>[] {} },
+            { ShaderPathID.Unlit, new Action<Material>[] {} },
+            { ShaderPathID.Fabric, new Action<Material>[] {} },
+            { ShaderPathID.Decal, new Action<Material>[] {} },
+            { ShaderPathID.TerrainLit, new Action<Material>[] {} },
+            { ShaderPathID.SG_Unlit, new Action<Material>[] {} },
+            { ShaderPathID.SG_Lit, new Action<Material>[] {} },
+            { ShaderPathID.SG_Hair, new Action<Material>[] {} },
+            { ShaderPathID.SG_Fabric, new Action<Material>[] {} },
+            { ShaderPathID.SG_StackLit, new Action<Material>[] {} },
+            { ShaderPathID.SG_Decal, new Action<Material>[] {} },
+        };
+
+        #region Migrations
+
+        //exemple migration method, remove it after first real migration
+        //static void EmissiveIntensityToColor(Material material)
+        //{
+        //    var emissiveIntensity = material.GetFloat("_EmissiveIntensity");
+
+        //    var emissiveColor = Color.black;
+        //    if (material.HasProperty("_EmissiveColor"))
+        //        emissiveColor = material.GetColor("_EmissiveColor");
+        //    emissiveColor *= emissiveIntensity;
+        //    emissiveColor.a = 1.0f;
+
+        //    material.SetColor("_EmissiveColor", emissiveColor);
+        //    material.SetColor("_EmissionColor", Color.white);
+        //}
+
+        #endregion
     }
 }
