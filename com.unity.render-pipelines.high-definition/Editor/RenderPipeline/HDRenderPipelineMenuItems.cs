@@ -123,7 +123,7 @@ namespace UnityEditor.Rendering.HighDefinition
             ProjectWindowUtil.StartNameEditingIfProjectWindowExists(0, ScriptableObject.CreateInstance<DoCreateNewAssetDiffusionProfileSettings>(), "New Diffusion Profile.asset", icon, null);
         }
         
-        [MenuItem("Assets/Create/Shader/Diffusion Profile", priority = CoreUtils.assetCreateMenuPriority2)]
+        [MenuItem("Assets/Create/Shader/HDRP/Custom Pass")]
         static void MenuCreateCustomPassShader()
         {
             const string customPassTemplateGUID = "2e9bd7db24646bc409f60aa1d91e8883"; // CustomPassShader.template

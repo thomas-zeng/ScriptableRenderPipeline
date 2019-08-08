@@ -56,7 +56,7 @@ namespace UnityEngine.Rendering.HighDefinition
             //Filter settings
             public CustomPassRenderQueueType    renderQueueType = CustomPassRenderQueueType.Opaque;
             public string[]                     passNames;
-            public LayerMask                    layerMask;
+            public LayerMask                    layerMask = -1;
             public SortingCriteria              sortingCriteria = SortingCriteria.CommonOpaque;
 
             // Override material
@@ -80,15 +80,15 @@ namespace UnityEngine.Rendering.HighDefinition
                 ExecuteFullScreen(cmd);
         }
 
-        RendererListDesc PrepareForwardEmissiveRendererList(CullingResults cullResults, HDCamera hdCamera)
+        protected void ExecuteRenderers(ScriptableRenderContext renderContext, CommandBuffer cmd, HDCamera hdCamera, CullingResults cullResults)
         {
             ShaderTagId[] unlitShaderTags = {
+                HDShaderPassNames.s_ForwardName,
                 HDShaderPassNames.s_ForwardOnlyName,        // HD Unlit shader
                 HDShaderPassNames.s_SRPDefaultUnlitName     // Cross SRP Unlit shader
             };
-            
+ 
             var renderQueueType = (HDRenderQueue.RenderQueueType)settings.renderQueueType;
-            bool transparent = HDRenderQueue.k_RenderQueue_AllTransparent.Contains(HDRenderQueue.ChangeType(renderQueueType, 0));
 
             var result = new RendererListDesc(unlitShaderTags, cullResults, hdCamera.camera)
             {
@@ -100,12 +100,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 overrideMaterialPassIndex = settings.overrideMaterialPassIndex,
             };
 
-            return result;
-        }
-
-        protected void ExecuteRenderers(ScriptableRenderContext renderContext, CommandBuffer cmd, HDCamera camera, CullingResults cullResults)
-        {
-            HDUtils.DrawRendererList(renderContext, cmd, RendererList.Create(PrepareForwardEmissiveRendererList(cullResults, camera)));
+            HDUtils.DrawRendererList(renderContext, cmd, RendererList.Create(result));
         }
 
         protected void ExecuteFullScreen(CommandBuffer cmd)

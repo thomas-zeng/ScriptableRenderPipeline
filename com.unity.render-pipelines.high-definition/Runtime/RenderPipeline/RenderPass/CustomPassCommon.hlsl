@@ -13,12 +13,14 @@ struct Varyings
     UNITY_VERTEX_OUTPUT_STEREO
 };
 
+// If you add somthing here, be sure to update the associated template file: CustomPassShader.template
 struct CustomPassInputs
 {
     float2      screenSpaceUV;
     uint2       screenSpacePixelCoordinates;
     float3      worldSpaceViewDirection;
     float       rawDepth;
+    float3      worldSpacePosition; // Can be camera-relative
 };
 
 Varyings Vert(Attributes input)
@@ -40,6 +42,7 @@ CustomPassInputs LoadPassInputs(Varyings input)
 
     // Copy data to a more user friendly structure
     customPassInputs.screenSpaceUV = posInput.positionNDC;
+    customPassInputs.worldSpacePosition = posInput.positionWS;
     customPassInputs.screenSpacePixelCoordinates = posInput.positionSS;
     customPassInputs.worldSpaceViewDirection = GetWorldSpaceNormalizeViewDir(posInput.positionWS);
     customPassInputs.rawDepth = depth;
