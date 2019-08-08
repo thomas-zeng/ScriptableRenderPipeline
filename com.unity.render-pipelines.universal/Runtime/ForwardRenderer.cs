@@ -123,8 +123,7 @@ namespace UnityEngine.Rendering.Universal
             if (cameraData.isStereoEnabled && cameraData.requiresDepthTexture)
                 requiresDepthPrepass = true;
 
-            bool createColorTexture = RequiresIntermediateColorTexture(ref renderingData, cameraTargetDescriptor)
-                                      /*|| rendererFeatures.Count != 0*/;
+            bool createColorTexture = RequiresIntermediateColorTexture(ref renderingData, cameraTargetDescriptor);
 
             // If camera requires depth and there's no depth pre-pass we create a depth texture that can be read
             // later by effect requiring it.
@@ -138,12 +137,7 @@ namespace UnityEngine.Rendering.Universal
             if (intermediateRenderTexture)
                 CreateCameraRenderTarget(context, ref cameraData);
 
-            // When rendering to a render texture and we don't need any intermediate render target we setup camera target
-            // as the camera render texture.
-            if (cameraData.camera.targetTexture == null || cameraData.camera.cameraType == CameraType.SceneView)
-                ConfigureCameraTarget(m_ActiveCameraColorAttachment.Identifier(), m_ActiveCameraDepthAttachment.Identifier());
-            else
-                ConfigureCameraTarget(new RenderTargetIdentifier(cameraData.camera.targetTexture), BuiltinRenderTextureType.CameraTarget);
+            ConfigureCameraTarget(m_ActiveCameraColorAttachment.Identifier(), m_ActiveCameraDepthAttachment.Identifier());
 
             // if rendering to intermediate render texture we don't have to create msaa backbuffer
             int backbufferMsaaSamples = (intermediateRenderTexture) ? 1 : cameraTargetDescriptor.msaaSamples;
