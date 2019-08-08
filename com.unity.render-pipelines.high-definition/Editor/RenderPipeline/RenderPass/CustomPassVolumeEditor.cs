@@ -29,16 +29,15 @@ namespace UnityEditor.Rendering.HighDefinition
             public SerializedProperty   injectionPoint;
         }
 
-        SerializedObject        m_serializedPassVolumeObject;
+        Dictionary<Object, SerializedProperty> m_CachedSettingsProperties = new Dictionary<Object, SerializedProperty>();
+
         SerializedPassVolume    m_SerializedPassVolume;
 
         void OnEnable()
         {
             m_Volume = target as CustomPassVolume;
 
-            m_serializedPassVolumeObject = new SerializedObject(targets);
-
-            using (var o = new PropertyFetcher<CustomPassVolume>(m_serializedPassVolumeObject))
+            using (var o = new PropertyFetcher<CustomPassVolume>(serializedObject))
             {
                 m_SerializedPassVolume = new SerializedPassVolume
                 {
@@ -55,21 +54,48 @@ namespace UnityEditor.Rendering.HighDefinition
         {
             DrawSettingsGUI();
             DrawCustomPassReorderableList();
+        }
 
-            if (GUI.changed)
+        SerializedProperty GetCustomPassProperty(SerializedProperty passList, int index)
+        {
+            var customPass = passList.GetArrayElementAtIndex(index).objectReferenceValue;
+            SerializedProperty  property;
+
+            if (!m_CachedSettingsProperties.TryGetValue(customPass, out property))
             {
-                m_serializedPassVolumeObject.ApplyModifiedProperties();
+                property = m_CachedSettingsProperties[customPass] = new SerializedObject(customPass).FindProperty("settings");
             }
+
+            property.serializedObject.Update();
+            return property;
         }
 
         void DrawSettingsGUI()
         {
-            EditorGUILayout.PropertyField(m_SerializedPassVolume.isGlobal, Styles.isGlobal);
-            EditorGUILayout.PropertyField(m_SerializedPassVolume.injectionPoint, Styles.injectionPoint);
+            serializedObject.Update();
+            
+            EditorGUI.BeginChangeCheck();
+            {
+                EditorGUILayout.PropertyField(m_SerializedPassVolume.isGlobal, Styles.isGlobal);
+                EditorGUILayout.PropertyField(m_SerializedPassVolume.injectionPoint, Styles.injectionPoint);
+            }
+            if (EditorGUI.EndChangeCheck())
+                serializedObject.ApplyModifiedProperties();
         }
 
         void DrawCustomPassReorderableList()
         {
+            // Sanitize list:
+            for (int i = 0; i < m_SerializedPassVolume.customPasses.arraySize; i++)
+            {
+                if (m_SerializedPassVolume.customPasses.GetArrayElementAtIndex(i).objectReferenceValue == null)
+                {
+                    m_SerializedPassVolume.customPasses.DeleteArrayElementAtIndex(i);
+                    serializedObject.ApplyModifiedProperties();
+                    i++;
+                }
+            }
+
             EditorGUILayout.BeginVertical();
             m_CustomPassList.DoLayoutList();
             EditorGUILayout.EndVertical();
@@ -85,18 +111,36 @@ namespace UnityEditor.Rendering.HighDefinition
 
             m_CustomPassList.drawElementCallback = (rect, index, active, focused) => {
                 EditorGUI.BeginChangeCheck();
-                EditorGUI.PropertyField(rect, passList.GetArrayElementAtIndex(index), true);
+                
+                var customPass = passList.GetArrayElementAtIndex(index).objectReferenceValue;
+                var serializedPass = GetCustomPassProperty(passList, index);
+                EditorGUI.PropertyField(rect, serializedPass, true);
                 if (EditorGUI.EndChangeCheck())
-                    m_serializedPassVolumeObject.ApplyModifiedProperties();
+                    serializedPass.serializedObject.ApplyModifiedProperties();
             };
 
-            m_CustomPassList.elementHeightCallback = (index) => EditorGUI.GetPropertyHeight(passList.GetArrayElementAtIndex(index));
+            m_CustomPassList.elementHeightCallback = (index) => EditorGUI.GetPropertyHeight(GetCustomPassProperty(passList, index));
+
+            m_CustomPassList.onAddCallback += (list) => {
+				var customPass = ScriptableObject.CreateInstance< CustomPass >();
+                Undo.RegisterCreatedObjectUndo(customPass, "Create new Custom pass");
+				passList.arraySize++;
+				passList.GetArrayElementAtIndex(list.count - 1).objectReferenceValue = customPass;
+				passList.serializedObject.ApplyModifiedProperties();
+			};
+
+            m_CustomPassList.onRemoveCallback = (list) => {
+                var customPass = passList.GetArrayElementAtIndex(list.index).objectReferenceValue;
+                Undo.DestroyObjectImmediate(customPass);
+                ReorderableList.defaultBehaviours.DoRemoveButton(list);
+                passList.DeleteArrayElementAtIndex(list.index);
+                passList.serializedObject.ApplyModifiedProperties();
+            };
         }
 
         float GetCustomPassEditorHeight(SerializedProperty pass)
         {
             return EditorGUIUtility.singleLineHeight;
         }
-        
     }
 }

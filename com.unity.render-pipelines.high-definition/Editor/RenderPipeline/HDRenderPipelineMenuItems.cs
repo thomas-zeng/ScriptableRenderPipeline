@@ -122,6 +122,14 @@ namespace UnityEditor.Rendering.HighDefinition
             var icon = EditorGUIUtility.FindTexture("ScriptableObject Icon");
             ProjectWindowUtil.StartNameEditingIfProjectWindowExists(0, ScriptableObject.CreateInstance<DoCreateNewAssetDiffusionProfileSettings>(), "New Diffusion Profile.asset", icon, null);
         }
+        
+        [MenuItem("Assets/Create/Shader/Diffusion Profile", priority = CoreUtils.assetCreateMenuPriority2)]
+        static void MenuCreateCustomPassShader()
+        {
+            const string customPassTemplateGUID = "2e9bd7db24646bc409f60aa1d91e8883"; // CustomPassShader.template
+            string templatePath = AssetDatabase.GUIDToAssetPath(customPassTemplateGUID);
+            ProjectWindowUtil.CreateScriptAssetFromTemplateFile(templatePath, "New CustomPass.shader");
+        }
 
         //[MenuItem("Internal/HDRP/Add \"Additional Light-shadow Data\" (if not present)")]
         static void AddAdditionalLightData()

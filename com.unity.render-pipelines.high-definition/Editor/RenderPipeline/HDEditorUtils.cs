@@ -344,6 +344,9 @@ namespace UnityEditor.Rendering.HighDefinition
 
         internal static bool IsHDRPShader(Shader shader)
         {
+            if (shader == null)
+                return false;
+
             if (shader.IsShaderGraph())
             {
                 string shaderPath = AssetDatabase.GetAssetPath(shader);
@@ -361,6 +364,27 @@ namespace UnityEditor.Rendering.HighDefinition
             }
             else
                 return shader.name.Contains("HDRP");
+        }
+
+        internal static bool IsUnlitHDRPShader(Shader shader)
+        {
+            if (shader == null)
+                return false;
+
+            if (shader.IsShaderGraph())
+            {
+                string shaderPath = AssetDatabase.GetAssetPath(shader);
+                switch (GraphUtil.GetOutputNodeType(shaderPath).Name)
+                {
+                    case nameof(HDUnlitMasterNode):
+                    case nameof(UnlitMasterNode):
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+            else
+                return shader.name == "HDRP/Unlit";
         }
     }
 

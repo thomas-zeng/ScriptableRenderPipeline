@@ -4,11 +4,28 @@ using System.Linq;
 
 namespace UnityEngine.Rendering.HighDefinition
 {
+    /// <summary>
+    /// Unity Monobehavior that manages the execution of custom passes.
+    /// It provides 
+    /// </summary>
     [ExecuteAlways]
-    class CustomPassVolume : MonoBehaviour
+    public class CustomPassVolume : MonoBehaviour
     {
+        /// <summary>
+        /// Whether or not the volume is global. If true, the component will ignore all colliders attached to it
+        /// </summary>
         public bool                     isGlobal;
+
+        /// <summary>
+        /// List of custom passes to execute
+        /// </summary>
+        /// <typeparam name="CustomPass"></typeparam>
+        /// <returns></returns>
         public List<CustomPass>         customPasses = new List<CustomPass>();
+
+        /// <summary>
+        /// Where the custom passes are going to be injected in HDRP
+        /// </summary>
         public CustomPassInjectionPoint injectionPoint;
         
         [SerializeField]
@@ -29,12 +46,13 @@ namespace UnityEngine.Rendering.HighDefinition
 
         void OnDisable() => UnRegister(this);
 
-        public void Execute(ScriptableRenderContext renderContext, CommandBuffer cmd, HDCamera hdCamera, CullingResults cullingResult)
+        internal void Execute(ScriptableRenderContext renderContext, CommandBuffer cmd, HDCamera hdCamera, CullingResults cullingResult)
         {
             foreach (var pass in customPasses)
             {
-                using (new ProfilingSample(cmd, pass.name))
-                    pass.Execute(renderContext, cmd, hdCamera, cullingResult);
+                if (pass != null && pass.settings.enabled)
+                    using (new ProfilingSample(cmd, pass.settings.name))
+                        pass.Execute(renderContext, cmd, hdCamera, cullingResult);
             }
         }
 
@@ -42,7 +60,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
         static void UnRegister(CustomPassVolume volume) => m_ActivePassVolumes.Remove(volume);
 
-        public static void Update(Transform trigger)
+        internal static void Update(Transform trigger)
         {
             bool onlyGlobal = trigger == null;
             var triggerPos = onlyGlobal ? Vector3.zero : trigger.position;
