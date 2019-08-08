@@ -221,7 +221,7 @@ namespace UnityEngine.Rendering.Universal
                 InitializeRenderingData(settings, ref cameraData, ref cullResults, out var renderingData);
 
                 renderer.Setup(context, ref renderingData);
-                renderer.Execute(context, ref renderingData, cmd);
+                renderer.Execute(context, ref renderingData);
             }
 
             context.ExecuteCommandBuffer(cmd);

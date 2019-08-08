@@ -178,7 +178,7 @@ namespace UnityEngine.Rendering.Universal
         /// </summary>
         /// <param name="context">Use this render context to issue any draw commands during execution.</param>
         /// <param name="renderingData">Current render state information.</param>
-        public void Execute(ScriptableRenderContext context, ref RenderingData renderingData, CommandBuffer cmd)
+        public void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
             Camera camera = renderingData.cameraData.camera;
             ClearRenderState(context);
@@ -231,8 +231,16 @@ namespace UnityEngine.Rendering.Universal
                 BeginXRRendering(context, camera);
 
 #if VISUAL_EFFECT_GRAPH_0_0_1_OR_NEWER
+#if UNITY_EDITOR
+            var tag = camera.name;
+#else
+            var tag = k_RenderCameraTag;
+#endif
+            var localCmd = CommandBufferPool.Get(tag);
             //Triggers dispatch per camera, all global parameters should have been setup at this stage.
-            VFX.VFXManager.ProcessCameraCommand(camera, cmd);
+            VFX.VFXManager.ProcessCameraCommand(camera, localCmd);
+            context.ExecuteCommandBuffer(localCmd);
+            CommandBufferPool.Release(localCmd);
 #endif
 
             // In this block main rendering executes.
