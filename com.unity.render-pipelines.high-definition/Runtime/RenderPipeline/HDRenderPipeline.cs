@@ -1837,7 +1837,8 @@ namespace UnityEngine.Rendering.HighDefinition
                 RenderDebugViewMaterial(cullingResults, hdCamera, renderContext, cmd);
             }
 #if ENABLE_RAYTRACING
-            else if (VolumeManager.instance.stack.GetComponent<PathTracing>().enable.value)
+            else if (hdCamera.frameSettings.IsEnabled(FrameSettingsField.RayTracing) &&
+                     VolumeManager.instance.stack.GetComponent<PathTracing>().enable.value)
             {
                 m_PathTracer.Render(hdCamera, cmd, m_CameraColorBuffer, renderContext, m_FrameCount);
             }
