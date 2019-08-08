@@ -231,12 +231,7 @@ namespace UnityEngine.Rendering.Universal
                 BeginXRRendering(context, camera);
 
 #if VISUAL_EFFECT_GRAPH_0_0_1_OR_NEWER
-#if UNITY_EDITOR
-            var tag = camera.name;
-#else
-            var tag = k_RenderCameraTag;
-#endif
-            var localCmd = CommandBufferPool.Get(tag);
+            var localCmd = CommandBufferPool.Get(string.Empty);
             //Triggers dispatch per camera, all global parameters should have been setup at this stage.
             VFX.VFXManager.ProcessCameraCommand(camera, localCmd);
             context.ExecuteCommandBuffer(localCmd);
