@@ -10,6 +10,28 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.Rendering.HighDefinition
 {
+    public enum ShaderPathID
+    {
+        Lit,
+        LitTesselation,
+        LayeredLit,
+        LayeredLitTesselation,
+        StackLit,
+        Unlit,
+        Fabric,
+        Decal,
+        TerrainLit,
+        Count_Standard,
+        SG_Unlit = Count_Standard,
+        SG_Lit,
+        SG_Hair,
+        SG_Fabric,
+        SG_StackLit,
+        SG_Decal,
+        Count_All,
+        Count_ShaderGraph = Count_All - Count_Standard
+    }
+
     public class HDEditorUtils
     {
         internal const string FormatingPath =
@@ -57,7 +79,7 @@ namespace UnityEditor.Rendering.HighDefinition
             { "HDRP/TerrainLit", TerrainLitGUI.SetupMaterialKeywordsAndPass },
             { "HDRP/AxF", AxFGUI.SetupMaterialKeywordsAndPass }
         };
-
+        
         static Dictionary<Type, MaterialResetter> k_ShaderGraphMaterialResetters = new Dictionary<Type, MaterialResetter>
         {
             { typeof(HDUnlitMasterNode), UnlitGUI.SetupUnlitMaterialKeywordsAndPass },
@@ -68,9 +90,7 @@ namespace UnityEditor.Rendering.HighDefinition
         };
 
         internal static T LoadAsset<T>(string relativePath) where T : UnityEngine.Object
-        {
-            return AssetDatabase.LoadAssetAtPath<T>(HDUtils.GetHDRenderPipelinePath() + relativePath);
-        }
+            => AssetDatabase.LoadAssetAtPath<T>(HDUtils.GetHDRenderPipelinePath() + relativePath);
 
         /// <summary>
         /// Reset the dedicated Keyword and Pass regarding the shader kind.
@@ -352,25 +372,79 @@ namespace UnityEditor.Rendering.HighDefinition
             EditorGUI.showMixedValue = false;
         }
 
-        internal static bool IsHDRPShader(Shader shader)
+        internal static bool IsHDRPShader(Shader shader, bool upgradable = false)
         {
             if (shader.IsShaderGraph())
             {
-                string shaderPath = AssetDatabase.GetAssetPath(shader);
-                switch (GraphUtil.GetOutputNodeType(shaderPath).Name)
-                {
-                    case nameof(HDLitMasterNode):
-                    case nameof(HDUnlitMasterNode):
-                    case nameof(FabricMasterNode):
-                    case nameof(HairMasterNode):
-                    case nameof(StackLitMasterNode):
-                        return true;
-                    default:
-                        return false;
-                }
+                var outputNodeType = GraphUtil.GetOutputNodeType(AssetDatabase.GetAssetPath(shader));
+                return s_MasterNodes.Contains(outputNodeType);
             }
+            else if (upgradable)
+                return s_ShaderPaths.Contains(shader.name);
             else
                 return shader.name.Contains("HDRP");
+        }
+
+        static readonly string[] s_ShaderPaths =
+        {
+            "HDRP/Lit",
+            "HDRP/LitTessellation",
+            "HDRP/LayeredLit",
+            "HDRP/LayeredLitTessellation",
+            "HDRP/StackLit",
+            "HDRP/Unlit",
+            "HDRP/Fabric",
+            "HDRP/Decal",
+            "HDRP/TerrainLit"
+        };
+        
+        static readonly Type[] s_MasterNodes =
+        {
+            typeof(HDUnlitMasterNode),
+            typeof(HDLitMasterNode),
+            typeof(HairMasterNode),
+            typeof(FabricMasterNode),
+            typeof(StackLitMasterNode),
+            typeof(DecalMasterNode)
+        };
+
+        internal static string GetShaderPath(ShaderPathID id)
+        {
+            int index = (int)id;
+            if (index < 0 && index >= (int)ShaderPathID.Count_Standard)
+            {
+                Debug.LogError("Trying to access HDRP shader path out of bounds");
+                return "";
+            }
+
+            return s_ShaderPaths[index];
+        }
+
+        internal static Type GetShaderMasterNodeType(ShaderPathID id)
+        {
+            int index = (int)id - (int)ShaderPathID.Count_Standard;
+            if (index < 0 && index >= (int)ShaderPathID.Count_ShaderGraph)
+            {
+                Debug.LogError("Trying to access HDRP shader path out of bounds");
+                return null;
+            }
+
+            return s_MasterNodes[index];
+        }
+
+        internal static ShaderPathID GetShaderEnumFromShader(Shader shader)
+        {
+            if (shader.IsShaderGraph())
+            {
+                var type = GraphUtil.GetOutputNodeType(AssetDatabase.GetAssetPath(shader));
+                var index = Array.FindIndex(s_MasterNodes, m => m == type);
+                return (ShaderPathID)(index + ShaderPathID.Count_Standard);
+            }
+            else
+            {
+                var index = Array.FindIndex(s_ShaderPaths, m => m == shader.name);
+                return (ShaderPathID)index;
+            }
         }
     }
 
