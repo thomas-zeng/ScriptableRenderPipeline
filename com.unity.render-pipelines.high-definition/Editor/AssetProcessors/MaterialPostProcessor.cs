@@ -152,16 +152,373 @@ namespace UnityEditor.Rendering.HighDefinition
         //static void EmissiveIntensityToColor(Material material)
         //{
         //    var emissiveIntensity = material.GetFloat("_EmissiveIntensity");
-
         //    var emissiveColor = Color.black;
         //    if (material.HasProperty("_EmissiveColor"))
         //        emissiveColor = material.GetColor("_EmissiveColor");
         //    emissiveColor *= emissiveIntensity;
         //    emissiveColor.a = 1.0f;
-
         //    material.SetColor("_EmissiveColor", emissiveColor);
         //    material.SetColor("_EmissionColor", Color.white);
         //}
+        //
+        //static void Serialization_API_Usage(Material material)
+        //{
+        //    var serializedObject = new SerializedObject(material);
+        //    AddSerializedInt(serializedObject, "former", 42);
+        //    RenameSerializedScalar(serializedObject, "former", "new");
+        //    Debug.Log(GetSerializedInt(serializedObject, "new"));
+        //    RemoveSerializedInt(serializedObject, "new");
+        //    serializedObject.ApplyModifiedProperties();
+        //}
+
+        #endregion
+
+        #region Serialization_API
+        //Methods in this region interact on the serialized material
+        //without filtering on what used shader knows
+
+        enum SerializedType
+        {
+            Boolean,
+            Integer,
+            Float,
+            Vector,
+            Color,
+            Texture
+        }
+
+        static SerializedProperty FindBase(SerializedObject material, SerializedType type)
+        {
+            var propertyBase = material.FindProperty("m_SavedProperties");
+
+            switch (type)
+            {
+                case SerializedType.Boolean:
+                case SerializedType.Integer:
+                case SerializedType.Float:
+                    propertyBase = propertyBase.FindPropertyRelative("m_Floats");
+                    break;
+                case SerializedType.Color:
+                case SerializedType.Vector:
+                    propertyBase = propertyBase.FindPropertyRelative("m_Colors");
+                    break;
+                case SerializedType.Texture:
+                    propertyBase = propertyBase.FindPropertyRelative("m_TexEnvs");
+                    break;
+                default:
+                    throw new ArgumentException($"Unknown SerializedType {type}");
+            }
+
+            return propertyBase;
+        }
+
+        static (SerializedProperty property, int index, SerializedProperty parent) FindProperty(SerializedObject material, string propertyName, SerializedType type)
+        {
+            var propertyBase = FindBase(material, type);
+
+            SerializedProperty property = null;
+            int maxSearch = propertyBase.arraySize;
+            int indexOf = 0;
+            for (; indexOf < maxSearch; ++indexOf)
+            {
+                property = propertyBase.GetArrayElementAtIndex(indexOf);
+                if (property.FindPropertyRelative("first").stringValue == propertyName)
+                    break;
+            }
+            if (indexOf == maxSearch)
+                throw new ArgumentException($"Unknown property: {propertyName}");
+
+            property = property.FindPropertyRelative("second");
+            return (property, indexOf, propertyBase);
+        }
+
+        static Color GetSerializedColor(SerializedObject material, string propertyName)
+            => FindProperty(material, propertyName, SerializedType.Color)
+            .property.colorValue;
+
+        static bool GetSerializedBoolean(SerializedObject material, string propertyName)
+            => FindProperty(material, propertyName, SerializedType.Boolean)
+            .property.floatValue > 0.5f;
+
+        static int GetSerializedInt(SerializedObject material, string propertyName)
+            => (int)FindProperty(material, propertyName, SerializedType.Integer)
+            .property.floatValue;
+
+        static Vector2Int GetSerializedVector2Int(SerializedObject material, string propertyName)
+        {
+            var property = FindProperty(material, propertyName, SerializedType.Vector).property;
+            return new Vector2Int(
+                (int)property.FindPropertyRelative("r").floatValue,
+                (int)property.FindPropertyRelative("g").floatValue);
+        }
+
+        static Vector3Int GetSerializedVector3Int(SerializedObject material, string propertyName)
+        {
+            var property = FindProperty(material, propertyName, SerializedType.Vector).property;
+            return new Vector3Int(
+                (int)property.FindPropertyRelative("r").floatValue,
+                (int)property.FindPropertyRelative("g").floatValue,
+                (int)property.FindPropertyRelative("b").floatValue);
+        }
+
+        static float GetSerializedFloat(SerializedObject material, string propertyName)
+            => FindProperty(material, propertyName, SerializedType.Float)
+            .property.floatValue;
+
+        static Vector2 GetSerializedVector2(SerializedObject material, string propertyName)
+        {
+            var property = FindProperty(material, propertyName, SerializedType.Vector).property;
+            return new Vector2(
+                property.FindPropertyRelative("r").floatValue,
+                property.FindPropertyRelative("g").floatValue);
+        }
+
+        static Vector3 GetSerializedVector3(SerializedObject material, string propertyName)
+        {
+            var property = FindProperty(material, propertyName, SerializedType.Vector).property;
+            return new Vector3(
+                property.FindPropertyRelative("r").floatValue,
+                property.FindPropertyRelative("g").floatValue,
+                property.FindPropertyRelative("b").floatValue);
+        }
+
+        static Vector4 GetSerializedVector4(SerializedObject material, string propertyName)
+        {
+            var property = FindProperty(material, propertyName, SerializedType.Vector).property;
+            return new Vector4(
+                property.FindPropertyRelative("r").floatValue,
+                property.FindPropertyRelative("g").floatValue,
+                property.FindPropertyRelative("b").floatValue,
+                property.FindPropertyRelative("a").floatValue);
+        }
+
+        static (Texture texture, Vector2 scale, Vector2 offset) GetSerializedTexture(SerializedObject material, string propertyName)
+        {
+            var property = FindProperty(material, propertyName, SerializedType.Texture).property;
+            return (
+                property.FindPropertyRelative("m_Texture").objectReferenceValue as Texture,
+                property.FindPropertyRelative("m_Scale").vector2Value,
+                property.FindPropertyRelative("m_Offset").vector2Value);
+        }
+
+        static void RemoveSerializedColor(SerializedObject material, string propertyName)
+        {
+            var res = FindProperty(material, propertyName, SerializedType.Color);
+            res.parent.DeleteArrayElementAtIndex(res.index);
+        }
+
+        static void RemoveSerializedBoolean(SerializedObject material, string propertyName)
+        {
+            var res = FindProperty(material, propertyName, SerializedType.Boolean);
+            res.parent.DeleteArrayElementAtIndex(res.index);
+        }
+
+        static void RemoveSerializedInt(SerializedObject material, string propertyName)
+        {
+            var res = FindProperty(material, propertyName, SerializedType.Integer);
+            res.parent.DeleteArrayElementAtIndex(res.index);
+        }
+
+        static void RemoveSerializedVector2Int(SerializedObject material, string propertyName)
+        {
+            var res = FindProperty(material, propertyName, SerializedType.Vector);
+            res.parent.DeleteArrayElementAtIndex(res.index);
+        }
+
+        static void RemoveSerializedVector3Int(SerializedObject material, string propertyName)
+        {
+            var res = FindProperty(material, propertyName, SerializedType.Vector);
+            res.parent.DeleteArrayElementAtIndex(res.index);
+        }
+
+        static void RemoveSerializedFloat(SerializedObject material, string propertyName)
+        {
+            var res = FindProperty(material, propertyName, SerializedType.Float);
+            res.parent.DeleteArrayElementAtIndex(res.index);
+        }
+
+        static void RemoveSerializedVector2(SerializedObject material, string propertyName)
+        {
+            var res = FindProperty(material, propertyName, SerializedType.Vector);
+            res.parent.DeleteArrayElementAtIndex(res.index);
+        }
+
+        static void RemoveSerializedVector3(SerializedObject material, string propertyName)
+        {
+            var res = FindProperty(material, propertyName, SerializedType.Vector);
+            res.parent.DeleteArrayElementAtIndex(res.index);
+        }
+
+        static void RemoveSerializedVector4(SerializedObject material, string propertyName)
+        {
+            var res = FindProperty(material, propertyName, SerializedType.Vector);
+            res.parent.DeleteArrayElementAtIndex(res.index);
+        }
+
+        static void RemoveSerializedTexture(SerializedObject material, string propertyName)
+        {
+            var res = FindProperty(material, propertyName, SerializedType.Texture);
+            res.parent.DeleteArrayElementAtIndex(res.index);
+        }
+
+        static void AddSerializedColor(SerializedObject material, string name, Color value)
+        {
+            var propertyBase = FindBase(material, SerializedType.Color);
+            int lastPos = propertyBase.arraySize;
+            propertyBase.InsertArrayElementAtIndex(lastPos);
+            var newProperty = propertyBase.GetArrayElementAtIndex(lastPos);
+            newProperty.FindPropertyRelative("first").stringValue = name;
+            newProperty.FindPropertyRelative("second").colorValue = value;
+        }
+
+        static void AddSerializedBoolean(SerializedObject material, string name, bool value)
+        {
+            var propertyBase = FindBase(material, SerializedType.Boolean);
+            propertyBase.InsertArrayElementAtIndex(0);
+            var newProperty = propertyBase.GetArrayElementAtIndex(0);
+            newProperty.FindPropertyRelative("first").stringValue = name;
+            newProperty.FindPropertyRelative("second").floatValue = value ? 1f : 0f;
+        }
+
+        static void AddSerializedInt(SerializedObject material, string name, int value)
+        {
+            var propertyBase = FindBase(material, SerializedType.Integer);
+            propertyBase.InsertArrayElementAtIndex(0);
+            var newProperty = propertyBase.GetArrayElementAtIndex(0);
+            newProperty.FindPropertyRelative("first").stringValue = name;
+            newProperty.FindPropertyRelative("second").floatValue = value;
+        }
+
+        static void AddSerializedVector2Int(SerializedObject material, string name, Vector2Int value)
+        {
+            var propertyBase = FindBase(material, SerializedType.Vector);
+            propertyBase.InsertArrayElementAtIndex(0);
+            var newProperty = propertyBase.GetArrayElementAtIndex(0);
+            newProperty.FindPropertyRelative("first").stringValue = name;
+            var container = newProperty.FindPropertyRelative("second");
+            container.FindPropertyRelative("r").floatValue = value.x;
+            container.FindPropertyRelative("g").floatValue = value.y;
+            container.FindPropertyRelative("b").floatValue = 0;
+            container.FindPropertyRelative("a").floatValue = 0;
+        }
+
+        static void AddSerializedVector3Int(SerializedObject material, string name, Vector3Int value)
+        {
+            var propertyBase = FindBase(material, SerializedType.Vector);
+            propertyBase.InsertArrayElementAtIndex(0);
+            var newProperty = propertyBase.GetArrayElementAtIndex(0);
+            newProperty.FindPropertyRelative("first").stringValue = name;
+            var container = newProperty.FindPropertyRelative("second");
+            container.FindPropertyRelative("r").floatValue = value.x;
+            container.FindPropertyRelative("g").floatValue = value.y;
+            container.FindPropertyRelative("b").floatValue = value.z;
+            container.FindPropertyRelative("a").floatValue = 0;
+        }
+
+        static void AddSerializedFloat(SerializedObject material, string name, float value)
+        {
+            var propertyBase = FindBase(material, SerializedType.Float);
+            propertyBase.InsertArrayElementAtIndex(0);
+            var newProperty = propertyBase.GetArrayElementAtIndex(0);
+            newProperty.FindPropertyRelative("first").stringValue = name;
+            newProperty.FindPropertyRelative("second").floatValue = value;
+        }
+
+        static void AddSerializedVector2(SerializedObject material, string name, Vector2 value)
+        {
+            var propertyBase = FindBase(material, SerializedType.Vector);
+            propertyBase.InsertArrayElementAtIndex(0);
+            var newProperty = propertyBase.GetArrayElementAtIndex(0);
+            newProperty.FindPropertyRelative("first").stringValue = name;
+            var container = newProperty.FindPropertyRelative("second");
+            container.FindPropertyRelative("r").floatValue = value.x;
+            container.FindPropertyRelative("g").floatValue = value.y;
+            container.FindPropertyRelative("b").floatValue = 0;
+            container.FindPropertyRelative("a").floatValue = 0;
+        }
+
+        static void AddSerializedVector3(SerializedObject material, string name, Vector3 value)
+        {
+            var propertyBase = FindBase(material, SerializedType.Vector);
+            propertyBase.InsertArrayElementAtIndex(0);
+            var newProperty = propertyBase.GetArrayElementAtIndex(0);
+            newProperty.FindPropertyRelative("first").stringValue = name;
+            var container = newProperty.FindPropertyRelative("second");
+            container.FindPropertyRelative("r").floatValue = value.x;
+            container.FindPropertyRelative("g").floatValue = value.y;
+            container.FindPropertyRelative("b").floatValue = value.z;
+            container.FindPropertyRelative("a").floatValue = 0;
+        }
+
+        static void AddSerializedVector4(SerializedObject material, string name, Vector4 value)
+        {
+            var propertyBase = FindBase(material, SerializedType.Vector);
+            propertyBase.InsertArrayElementAtIndex(0);
+            var newProperty = propertyBase.GetArrayElementAtIndex(0);
+            newProperty.FindPropertyRelative("first").stringValue = name;
+            var container = newProperty.FindPropertyRelative("second");
+            container.FindPropertyRelative("r").floatValue = value.x;
+            container.FindPropertyRelative("g").floatValue = value.y;
+            container.FindPropertyRelative("b").floatValue = value.z;
+            container.FindPropertyRelative("a").floatValue = value.w;
+        }
+
+        static void AddSerializedTexture(SerializedObject material, string name, Texture texture, Vector2 scale, Vector2 offset)
+        {
+            var propertyBase = FindBase(material, SerializedType.Texture);
+            propertyBase.InsertArrayElementAtIndex(0);
+            var newProperty = propertyBase.GetArrayElementAtIndex(0);
+            newProperty.FindPropertyRelative("first").stringValue = name;
+            var container = newProperty.FindPropertyRelative("second");
+            container.FindPropertyRelative("m_Texture").objectReferenceValue = texture;
+            container.FindPropertyRelative("m_Scale").vector2Value = scale;
+            container.FindPropertyRelative("m_Offset").vector2Value = offset;
+        }
+
+        static void RenameSerializedScalar(SerializedObject material, string oldName, string newName)
+        {
+            var res = FindProperty(material, oldName, SerializedType.Float);
+            var value = res.property.floatValue;
+            res.parent.InsertArrayElementAtIndex(0);
+            var newProperty = res.parent.GetArrayElementAtIndex(0);
+            newProperty.FindPropertyRelative("first").stringValue = newName;
+            newProperty.FindPropertyRelative("second").floatValue = value;
+            res.parent.DeleteArrayElementAtIndex(res.index + 1);
+        }
+
+        static void RenameSerializedVector(SerializedObject material, string oldName, string newName)
+        {
+            var res = FindProperty(material, oldName, SerializedType.Vector);
+            var valueX = res.property.FindPropertyRelative("r").floatValue;
+            var valueY = res.property.FindPropertyRelative("g").floatValue;
+            var valueZ = res.property.FindPropertyRelative("b").floatValue;
+            var valueW = res.property.FindPropertyRelative("a").floatValue;
+            res.parent.InsertArrayElementAtIndex(0);
+            var newProperty = res.parent.GetArrayElementAtIndex(0);
+            newProperty.FindPropertyRelative("first").stringValue = newName;
+            var container = newProperty.FindPropertyRelative("second");
+            container.FindPropertyRelative("r").floatValue = valueX;
+            container.FindPropertyRelative("g").floatValue = valueY;
+            container.FindPropertyRelative("b").floatValue = valueZ;
+            container.FindPropertyRelative("a").floatValue = valueW;
+            res.parent.DeleteArrayElementAtIndex(res.index + 1);
+        }
+
+        static void RenameSerializedTexture(SerializedObject material, string oldName, string newName)
+        {
+            var res = FindProperty(material, oldName, SerializedType.Texture);
+            var texture = res.property.FindPropertyRelative("m_Texture").objectReferenceValue;
+            var scale = res.property.FindPropertyRelative("m_Scale").vector2Value;
+            var offset = res.property.FindPropertyRelative("m_Offset").vector2Value;
+            res.parent.InsertArrayElementAtIndex(0);
+            var newProperty = res.parent.GetArrayElementAtIndex(0);
+            newProperty.FindPropertyRelative("first").stringValue = newName;
+            var container = newProperty.FindPropertyRelative("second");
+            container.FindPropertyRelative("m_Texture").objectReferenceValue = texture;
+            container.FindPropertyRelative("m_Scale").vector2Value = scale;
+            container.FindPropertyRelative("m_Offset").vector2Value = offset;
+            res.parent.DeleteArrayElementAtIndex(res.index + 1);
+        }
 
         #endregion
     }
