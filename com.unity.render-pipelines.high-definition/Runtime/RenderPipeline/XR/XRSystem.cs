@@ -273,11 +273,11 @@ namespace UnityEngine.Rendering.HighDefinition
             {
                 cmd.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
 
-                if (display.GetMirrorViewBlitDesc(null, out var blitDesc))
+                if (display.GetMirrorViewBlitDesc(null, display.GetPreferredMirrorBlitMode(), out var blitDesc))
                 {
                     if (blitDesc.nativeBlitAvailable)
                     {
-                        display.AddGraphicsThreadMirrorViewBlit(cmd, blitDesc.nativeBlitInvalidStates);
+                        display.AddGraphicsThreadMirrorViewBlit(cmd, display.GetPreferredMirrorBlitMode(), blitDesc.nativeBlitInvalidStates);
                     }
                     else
                     {
