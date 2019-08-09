@@ -68,6 +68,7 @@ namespace UnityEditor.Rendering.HighDefinition
 
                 ShaderPathID id = HDEditorUtils.GetShaderEnumFromShader(material.shader);
                 var migrations = k_Migrations[id];
+                var latestVersion = migrations.Length;
                 var wasUpgraded = false;
                 var assetVersions = AssetDatabase.LoadAllAssetsAtPath(asset);
                 AssetVersion assetVersion = null;
@@ -80,25 +81,29 @@ namespace UnityEditor.Rendering.HighDefinition
                     }
                 }
 
+                //subasset not found
                 if (!assetVersion)
                 {
                     wasUpgraded = true;
                     assetVersion = ScriptableObject.CreateInstance<AssetVersion>();
+                    assetVersion.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector | HideFlags.NotEditable;
                     if (s_CreatedAssets.Contains(asset))
                     {
-                        //set to latest asset version (migration.length)
-                        assetVersion.version = migrations.Length;
+                        //just created
+                        assetVersion.version = latestVersion;
                         s_CreatedAssets.Remove(asset);
+                        DelayedSubAssetCreation(asset, assetVersion, 1);
                     }
                     else
+                    {
+                        //asset exist prior migration
                         assetVersion.version = 0;
-
-                    assetVersion.hideFlags = HideFlags.HideInHierarchy | HideFlags.HideInInspector | HideFlags.NotEditable;
-                    AssetDatabase.AddObjectToAsset(assetVersion, asset);
+                        AssetDatabase.AddObjectToAsset(assetVersion, asset);
+                    }
                 }
 
                 //upgrade
-                while (assetVersion.version < migrations.Length)
+                while (assetVersion.version < latestVersion)
                 {
                     migrations[assetVersion.version](material);
                     assetVersion.version++;
@@ -107,6 +112,17 @@ namespace UnityEditor.Rendering.HighDefinition
 
                 if (wasUpgraded)
                     EditorUtility.SetDirty(assetVersion);
+            }
+        }
+
+        static void DelayedSubAssetCreation(String assetPath, ScriptableObject subasset, int frameToWait)
+        {
+            if (frameToWait > 0)
+                EditorApplication.delayCall += () => DelayedSubAssetCreation(assetPath, subasset, --frameToWait);
+            else
+            {
+                AssetDatabase.AddObjectToAsset(subasset, assetPath);
+                EditorUtility.SetDirty(subasset);
             }
         }
 
