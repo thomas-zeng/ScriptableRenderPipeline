@@ -5,14 +5,14 @@
 // To avoid allocating every frame, XRView is a struct and XRPass is pooled.
 
 #if UNITY_2019_3_OR_NEWER && ENABLE_VR
-//#define USE_XR_SDK
+#define USE_XR_SDK
 #endif
 
 using System;
 using System.Collections.Generic;
 using UnityEngine.Rendering;
 #if USE_XR_SDK
-using UnityEngine.Experimental.XR;
+using UnityEngine.XR;
 #endif
 
 namespace UnityEngine.Rendering.Universal

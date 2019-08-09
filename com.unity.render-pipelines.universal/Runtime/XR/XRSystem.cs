@@ -3,14 +3,14 @@
 // - or the 'legacy' C++ stereo rendering path and XRSettings (will be removed in 2020.1)
 
 #if UNITY_2019_3_OR_NEWER && ENABLE_VR
-//#define USE_XR_SDK
+#define USE_XR_SDK
 #endif
 
 using System;
 using System.Collections.Generic;
 using UnityEngine.Rendering;
 #if USE_XR_SDK
-using UnityEngine.Experimental.XR;
+using UnityEngine.XR;
 #endif
 
 namespace UnityEngine.Rendering.Universal
@@ -116,12 +116,13 @@ namespace UnityEngine.Rendering.Universal
             {
                 cmd.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
 
+                
                 // Null represents backbuffer as render texture
-                if (display.GetMirrorViewBlitDesc(null, out var blitDesc))
+                if (display.GetMirrorViewBlitDesc(null, display.GetPreferredMirrorBlitMode(), out var blitDesc))
                 {
                     if (blitDesc.nativeBlitAvailable)
                     {
-                        display.AddGraphicsThreadMirrorViewBlit(cmd, blitDesc.nativeBlitInvalidStates);
+                        display.AddGraphicsThreadMirrorViewBlit(cmd, display.GetPreferredMirrorBlitMode(), blitDesc.nativeBlitInvalidStates);
                     }
                     else
                     {
