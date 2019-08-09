@@ -58,8 +58,8 @@ namespace UnityEngine.Rendering.HighDefinition
             public CustomPassType           type;
             public CustomPassTargetBuffer   targetColorBuffer;
             public CustomPassTargetBuffer   targetDepthBuffer;
-
-            // TODO: expose clearFlags ?
+            public ClearFlag                clearFlags;
+            public bool                     isHDRPShader;
 
             // Used only for the UI to keep track of the toggle state
             public bool             filterFoldout;
@@ -96,6 +96,13 @@ namespace UnityEngine.Rendering.HighDefinition
                 CoreUtils.SetRenderTarget(cmd, cameraColorBuffer);
         }
 
+        void SetCustomPassTarget(CommandBuffer cmd, RTHandle cameraColorBuffer, RTHandle cameraDepthBuffer, RTHandle customColorBuffer, RTHandle customDepthBuffer)
+        {
+            RTHandle colorBuffer = (settings.targetColorBuffer == CustomPassTargetBuffer.Custom) ? customColorBuffer : cameraColorBuffer;
+            RTHandle depthBuffer = (settings.targetDepthBuffer == CustomPassTargetBuffer.Custom) ? customDepthBuffer : cameraDepthBuffer;
+            CoreUtils.SetRenderTarget(cmd, colorBuffer, depthBuffer, settings.clearFlags);
+        }
+
         /// <summary>
         /// Called when your pass needs to be executed by a camera
         /// </summary>
@@ -109,13 +116,6 @@ namespace UnityEngine.Rendering.HighDefinition
                 ExecuteRenderers(renderContext, cmd, camera, cullingResult);
             else
                 ExecuteFullScreen(cmd);
-        }
-
-        void SetCustomPassTarget(CommandBuffer cmd, RTHandle cameraColorBuffer, RTHandle cameraDepthBuffer, RTHandle customColorBuffer, RTHandle customDepthBuffer)
-        {
-            RTHandle colorBuffer = (settings.targetColorBuffer == CustomPassTargetBuffer.Custom) ? customColorBuffer : cameraColorBuffer;
-            RTHandle depthBuffer = (settings.targetColorBuffer == CustomPassTargetBuffer.Custom) ? customDepthBuffer : cameraDepthBuffer;
-            CoreUtils.SetRenderTarget(cmd, colorBuffer, depthBuffer, ClearFlag.All);
         }
 
         /// <summary>
@@ -132,10 +132,14 @@ namespace UnityEngine.Rendering.HighDefinition
                 HDShaderPassNames.s_ForwardOnlyName,        // HD Unlit shader
                 HDShaderPassNames.s_SRPDefaultUnlitName     // Cross SRP Unlit shader
             };
+
+            ShaderTagId[] shaderPasses = new ShaderTagId[settings.passNames.Length];
+            for (int i = 0; i < settings.passNames.Length; i++)
+                shaderPasses[i] = new ShaderTagId(settings.passNames[i]);
  
             var renderQueueType = (HDRenderQueue.RenderQueueType)settings.renderQueueType;
 
-            var result = new RendererListDesc(unlitShaderTags, cullResults, hdCamera.camera)
+            var result = new RendererListDesc(settings.isHDRPShader ? unlitShaderTags : shaderPasses, cullResults, hdCamera.camera)
             {
                 rendererConfiguration = PerObjectData.None,
                 renderQueueRange = HDRenderQueue.GetRange(renderQueueType),
@@ -143,6 +147,7 @@ namespace UnityEngine.Rendering.HighDefinition
                 excludeObjectMotionVectors = true,
                 overrideMaterial = settings.overrideMaterial,
                 overrideMaterialPassIndex = settings.overrideMaterialPassIndex,
+                layerMask = settings.layerMask,
             };
 
             HDUtils.DrawRendererList(renderContext, cmd, RendererList.Create(result));

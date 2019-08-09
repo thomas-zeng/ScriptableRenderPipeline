@@ -1,0 +1,87 @@
+Shader "Renderers/#SCRIPTNAME#"
+{
+    Properties
+    {
+        _Color("Color", Color) = (1,1,1,1)
+        _ColorMap("ColorMap", 2D) = "white" {}
+
+        // Transparency
+        _AlphaCutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
+    }
+
+    HLSLINCLUDE
+
+    #pragma target 4.5
+    #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
+
+    //enable GPU instancing support
+    #pragma multi_compile_instancing
+
+    ENDHLSL
+
+    SubShader
+    {
+        Pass
+        {
+            Name "ForwardOnly"
+
+            // Opaque render-states
+            Blend Off
+            ZWrite On
+            ZTest LEqual
+
+            Cull Back
+
+            HLSLPROGRAM
+
+            // Toggle the alpha test
+            #define _ALPHATEST_ON
+
+            // Toggle transparency
+            // #define _SURFACE_TYPE_TRANSPARENT
+
+            // Toggle fog on transparent
+            // #define _ENABLE_FOG_ON_TRANSPARENT
+
+            // Switch the blend mode
+            // #define _BLENDMODE_ALPHA _BLENDMODE_ADD _BLENDMODE_PRE_MULTIPLY
+            
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/RenderPass/CustomPassRenderers.hlsl"
+
+            // Put the code to render the objects in your custom pass in the GetCustomRenderersData function
+            // You have access to all the inputs in the CustomPassInput struct defined like this:
+            // struct CustomPassInput
+            // {
+            //     float3      viewDirection;
+            //     float3      worldSpacePosition; // relative to the camera
+            //     float2      screenSpacePosition;
+            //     float2      uv;
+            //     float4      color; // vertex color
+            // };
+
+            // For output, you can fill these fields in the CustomPassOutput struct:
+            // struct CustomPassOutput
+            // {
+            //     float3      color;
+            //     float       opacity;
+            //     float3      emissiveColor;
+            // };
+
+            void GetCustomRenderersData(in CustomPassInput input, inout CustomPassOutput output)
+            {
+                float2 colorMapUv = TRANSFORM_TEX(input.uv, _ColorMap);
+                float4 result = SAMPLE_TEXTURE2D(_ColorMap, sampler_UnlitColorMap, colorMapUv) * _Color;
+                output.color = result.rgb;
+
+#ifdef _ALPHATEST_ON
+                DoAlphaTest(result.a, _AlphaCutoff);
+#endif
+            }
+
+            #pragma vertex Vert
+            #pragma fragment Frag
+
+            ENDHLSL
+        }
+    }
+}

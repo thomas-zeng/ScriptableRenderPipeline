@@ -55,6 +55,8 @@ namespace UnityEditor.Rendering.HighDefinition
 		SerializedProperty      m_Enabled;
 		SerializedProperty      m_TargetColorBuffer;
 		SerializedProperty      m_TargetDepthBuffer;
+		SerializedProperty      m_IsHDRPShader;
+		SerializedProperty      m_ClearFlags;
 
 		// Foldouts
 		SerializedProperty      m_FilterFoldout;
@@ -74,7 +76,8 @@ namespace UnityEditor.Rendering.HighDefinition
 		// Fullscreen pass
 		SerializedProperty		m_FullScreenPassMaterial;
 
-	    private ReorderableList m_ShaderPassesList;
+	    ReorderableList m_ShaderPassesList;
+		bool isUnlitShader;
 
 		void FetchProperties(SerializedProperty property)
 		{
@@ -83,6 +86,8 @@ namespace UnityEditor.Rendering.HighDefinition
 			m_Enabled = property.FindPropertyRelative("enabled");
 			m_TargetColorBuffer = property.FindPropertyRelative("targetColorBuffer");
 			m_TargetDepthBuffer = property.FindPropertyRelative("targetDepthBuffer");
+			m_IsHDRPShader = property.FindPropertyRelative("isHDRPShader");
+			m_ClearFlags = property.FindPropertyRelative("clearFlags");
 
 		    // Header bools
 			m_FilterFoldout = property.FindPropertyRelative("filterFoldout");
@@ -123,7 +128,10 @@ namespace UnityEditor.Rendering.HighDefinition
 		    m_ShaderPassesList.drawHeaderCallback = (Rect testHeaderRect) => {
 			    EditorGUI.LabelField(testHeaderRect, Styles.shaderPassFilter);
 		    };
-		    
+
+			UpdateIsUnlitShader();
+			Undo.undoRedoPerformed += UpdateIsUnlitShader;
+
 		    firstTime = false;
 	    }
 
@@ -143,18 +151,8 @@ namespace UnityEditor.Rendering.HighDefinition
 
 			EditorGUI.BeginDisabledGroup(!m_Enabled.boolValue);
 			{
-				EditorGUI.PropertyField(rect, m_Name);
-				rect.y += Styles.defaultLineSpace;
-				
-				EditorGUI.PropertyField(rect, m_Type);
-				rect.y += Styles.defaultLineSpace;
+				DoCommonSettingsGUI(ref rect);
 
-				EditorGUI.PropertyField(rect, m_TargetColorBuffer);
-				rect.y += Styles.defaultLineSpace;
-
-				EditorGUI.PropertyField(rect, m_TargetDepthBuffer);
-				rect.y += Styles.defaultLineSpace;
-			
 				CustomPassType	passType = (CustomPassType)m_Type.enumValueIndex;
 
 				if (passType == CustomPassType.Renderers)
@@ -168,6 +166,24 @@ namespace UnityEditor.Rendering.HighDefinition
 			if (EditorGUI.EndChangeCheck())
 				property.serializedObject.ApplyModifiedProperties();
 	    }
+
+		void DoCommonSettingsGUI(ref Rect rect)
+		{
+			EditorGUI.PropertyField(rect, m_Name);
+			rect.y += Styles.defaultLineSpace;
+			
+			EditorGUI.PropertyField(rect, m_Type);
+			rect.y += Styles.defaultLineSpace;
+
+			EditorGUI.PropertyField(rect, m_TargetColorBuffer);
+			rect.y += Styles.defaultLineSpace;
+
+			EditorGUI.PropertyField(rect, m_TargetDepthBuffer);
+			rect.y += Styles.defaultLineSpace;
+			
+			EditorGUI.PropertyField(rect, m_ClearFlags);
+			rect.y += Styles.defaultLineSpace;
+		}
 
 		void DoHeaderGUI(ref Rect rect)
 		{
@@ -248,7 +264,15 @@ namespace UnityEditor.Rendering.HighDefinition
 	    void DoMaterialOverride(ref Rect rect)
 	    {
 		    //Override material
+			EditorGUI.BeginChangeCheck();
 		    EditorGUI.PropertyField(rect, m_OverrideMaterial, Styles.overrideMaterial);
+			if (EditorGUI.EndChangeCheck())
+			{
+				UpdateIsUnlitShader();
+				var mat = m_OverrideMaterial.objectReferenceValue as Material;
+				m_IsHDRPShader.boolValue = isUnlitShader || HDEditorUtils.IsHDRPShader(mat?.shader);
+			}
+
 		    if (m_OverrideMaterial.objectReferenceValue)
 		    {
 				var mat = m_OverrideMaterial.objectReferenceValue as Material;
@@ -271,21 +295,30 @@ namespace UnityEditor.Rendering.HighDefinition
 
 			var mat = m_OverrideMaterial.objectReferenceValue as Material;
 			// We only draw the shader passes if we don't know which type of shader is used (aka user shaders)
-			if (HDEditorUtils.IsUnlitHDRPShader(mat?.shader))
+			if (isUnlitShader)
 			{
 				EditorGUI.HelpBox(shaderPassesRect, Styles.unlitShaderMessage, MessageType.Info);
 				rect.y += Styles.defaultLineSpace;
 			}
-			else if (HDEditorUtils.IsHDRPShader(mat?.shader))
+			else if (m_IsHDRPShader.boolValue)
 			{
+				// Lit HDRP shader not supported
+				m_IsHDRPShader.boolValue = true;
 				EditorGUI.HelpBox(shaderPassesRect, Styles.hdrpLitShaderMessage, MessageType.Warning);
 				rect.y += Styles.defaultLineSpace;
 			}
 			else
 			{
+				m_IsHDRPShader.boolValue = false;
 				m_ShaderPassesList.DoList(shaderPassesRect);
 				rect.y += m_ShaderPassesList.GetHeight();
 			}
+		}
+
+		void UpdateIsUnlitShader()
+		{
+			var mat = m_OverrideMaterial.objectReferenceValue as Material;
+			isUnlitShader = HDEditorUtils.IsUnlitHDRPShader(mat?.shader);
 		}
 
 	    public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
@@ -302,7 +335,7 @@ namespace UnityEditor.Rendering.HighDefinition
 			
 		    if (!firstTime)
 		    {
-				height += Styles.defaultLineSpace * 4; // name + type + target buffers
+				height += Styles.defaultLineSpace * 5; // name + type + target buffers + clearFlags
 		        height += Styles.defaultLineSpace * (m_FilterFoldout.boolValue ? m_FilterLines : 1);
 
 				if (type == CustomPassType.Renderers)
@@ -312,7 +345,7 @@ namespace UnityEditor.Rendering.HighDefinition
 					{
 						height += Styles.defaultLineSpace * (m_OverrideMaterial.objectReferenceValue != null ? m_MaterialLines : 1);
 						var mat = m_OverrideMaterial.objectReferenceValue as Material;
-						if (HDEditorUtils.IsHDRPShader(mat?.shader))
+						if (m_IsHDRPShader.boolValue || isUnlitShader)
 							height += Styles.defaultLineSpace; // help box
 						else
 							height += m_ShaderPassesList.GetHeight(); // shader passes list

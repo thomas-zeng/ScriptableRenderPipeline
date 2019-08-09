@@ -289,7 +289,7 @@ float3 SampleCameraColor(float2 uv)
 
 float3 SampleCustomColor(float2 uv)
 {
-    return SAMPLE_TEXTURE2D_X_LOD(_CustomColorTexture, s_trilinear_clamp_sampler, uv * _RTHandleScaleHistory.xy, 0).rgb;
+    return SAMPLE_TEXTURE2D_X_LOD(_CustomColorTexture, s_trilinear_clamp_sampler, uv * _RTHandleScale.xy, 0).rgb;
 }
 
 float3 LoadCustomColor(uint2 pixelCoords)

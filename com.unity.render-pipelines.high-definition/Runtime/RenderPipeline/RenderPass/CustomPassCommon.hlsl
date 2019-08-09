@@ -1,6 +1,11 @@
 #ifndef CUSTOM_PASS_COMMON
 #define CUSTOM_PASS_COMMON
 
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonLighting.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
+
 struct Attributes
 {
     uint vertexID : SV_VertexID;
@@ -18,7 +23,7 @@ struct CustomPassInputs
 {
     float2      screenSpaceUV;
     uint2       screenSpacePixelCoordinates;
-    float3      worldSpaceViewDirection;
+    float3      viewDirection;
     float       rawDepth;
     float3      worldSpacePosition; // Can be camera-relative
 };
@@ -44,11 +49,10 @@ CustomPassInputs LoadPassInputs(Varyings input)
     customPassInputs.screenSpaceUV = posInput.positionNDC;
     customPassInputs.worldSpacePosition = posInput.positionWS;
     customPassInputs.screenSpacePixelCoordinates = posInput.positionSS;
-    customPassInputs.worldSpaceViewDirection = GetWorldSpaceNormalizeViewDir(posInput.positionWS);
+    customPassInputs.viewDirection = GetWorldSpaceNormalizeViewDir(posInput.positionWS);
     customPassInputs.rawDepth = depth;
 
     return customPassInputs;
 }
-
 
 #endif // CUSTOM_PASS_COMMON

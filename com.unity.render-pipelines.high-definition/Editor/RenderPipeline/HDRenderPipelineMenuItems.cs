@@ -128,7 +128,15 @@ namespace UnityEditor.Rendering.HighDefinition
         {
             const string customPassTemplateGUID = "2e9bd7db24646bc409f60aa1d91e8883"; // CustomPassShader.template
             string templatePath = AssetDatabase.GUIDToAssetPath(customPassTemplateGUID);
-            ProjectWindowUtil.CreateScriptAssetFromTemplateFile(templatePath, "New CustomPass.shader");
+            ProjectWindowUtil.CreateScriptAssetFromTemplateFile(templatePath, "New FullScreen CustomPass.shader");
+        }
+
+        [MenuItem("Assets/Create/Shader/HDRP/Custom Renderers Pass")]
+        static void MenuCreateCustomRenderersPassShader()
+        {
+            const string customPassTemplateGUID = "b3306ef233ac5564eaf1f090dfc8640e"; // CustomPassShader.template
+            string templatePath = AssetDatabase.GUIDToAssetPath(customPassTemplateGUID);
+            ProjectWindowUtil.CreateScriptAssetFromTemplateFile(templatePath, "New Renderers CustomPass.shader");
         }
 
         //[MenuItem("Internal/HDRP/Add \"Additional Light-shadow Data\" (if not present)")]
