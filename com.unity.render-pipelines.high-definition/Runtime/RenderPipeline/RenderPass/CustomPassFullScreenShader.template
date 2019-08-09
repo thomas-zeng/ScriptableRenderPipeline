@@ -6,38 +6,31 @@ Shader "FullScreen/#SCRIPTNAME#"
 
     #pragma target 4.5
     #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
-    
+
     #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/RenderPass/CustomPassCommon.hlsl"
 
-    // The CustomPassInputs struct allow you to retrieve a lot of useful information for your fullScreenShader.
-    // You can retrtieve it by calling LoadPassInputs(varyings). Here is the definition of the structure:
-    // struct CustomPassInputs
+    // The PositionInputs struct allow you to retrieve a lot of useful information for your fullScreenShader:
+    // struct PositionInputs
     // {
-    //     float2      screenSpaceUV;
-    //     uint2       screenSpacePixelCoordinates;
-    //     float3      viewDirection;
-    //     float       rawDepth;
-    //     float3      worldSpacePosition; // Can be camera-relative
+    //     float3 positionWS;  // World space position (could be camera-relative)
+    //     float2 positionNDC; // Normalized screen coordinates within the viewport    : [0, 1) (with the half-pixel offset)
+    //     uint2  positionSS;  // Screen space pixel coordinates                       : [0, NumPixels)
+    //     uint2  tileCoord;   // Screen tile coordinates                              : [0, NumTiles)
+    //     float  deviceDepth; // Depth from the depth buffer                          : [0, 1] (typically reversed)
+    //     float  linearDepth; // View space Z coordinate                              : [Near, Far]
     // };
-
-    // Custom Buffer access:
-    // To sample or load data from the color / depth buffer of the custom target you can use these functions:
-    // float3 LoadCustomColor(uint2 pixelCoords)
-    // float3 SampleCustomColor(float2 uv)
-    // float SampleCustomDepth(float2 uv)
-    // float LoadCustomDepth(uint2 pixelCoords)
 
     // There are also a lot of utility function you can use inside Common.hlsl and Color.hlsl,
     // you can check them out in the source code of the core SRP package.
 
     float4 FullScreenPass(Varyings varyings) : SV_Target
     {
-        // Load common inputs for custom pass
-        CustomPassInputs input = LoadPassInputs(varyings);
-        float4 color = 1.0;
+        float depth = LoadCameraDepth(varyings.positionCS.xy);
+        PositionInputs posInput = GetPositionInput(varyings.positionCS.xy, _ScreenSize.zw, depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_V);
+        float3 viewDirection = GetWorldSpaceNormalizeViewDir(posInput.positionWS);
 
         // You can add your custom pass code here
-        color = float4(input.viewDirection, 0.2);
+        float4 color = float4(posInput.positionNDC, 0.0, 1);
 
         return color;
     }
@@ -54,10 +47,6 @@ Shader "FullScreen/#SCRIPTNAME#"
             ZTest Always
             Blend SrcAlpha OneMinusSrcAlpha
             Cull Off
-
-            // Stencil disclaimer: if you want to write to the stencil buffer, your custom pass must
-            // target the custom buffer, not the camera ! If you change the stencil bits of the camera
-            // buffer, trhe HDRP rendering will be screwed.
 
             HLSLPROGRAM
                 #pragma fragment FullScreenPass

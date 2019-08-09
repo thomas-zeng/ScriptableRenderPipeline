@@ -221,7 +221,8 @@ namespace UnityEditor.Rendering.HighDefinition
 				DoMaterialOverride(ref rect);
 				rect.y += Styles.defaultLineSpace;
 
-				DoShaderPassesList(ref rect);
+				// For now we disable the filtering by shader pass
+				// DoShaderPassesList(ref rect);
 
 				EditorGUI.PropertyField(rect, m_SortingCriteria, Styles.sortingCriteria);
 				rect.y += Styles.defaultLineSpace;
@@ -279,7 +280,6 @@ namespace UnityEditor.Rendering.HighDefinition
 			    rect.y += Styles.defaultLineSpace;
 			    EditorGUI.indentLevel++;
 			    EditorGUI.BeginChangeCheck();
-			    // EditorGUI.PropertyField(rect, m_OverrideMaterialPass, Styles.overrideMaterialPass);
 				m_OverrideMaterialPass.intValue = EditorGUI.IntPopup(rect, Styles.overrideMaterialPass, m_OverrideMaterialPass.intValue, GetMaterialPassNames(mat), Enumerable.Range(0, mat.passCount).ToArray());
 			    if (EditorGUI.EndChangeCheck())
 				    m_OverrideMaterialPass.intValue = Mathf.Max(0, m_OverrideMaterialPass.intValue);
@@ -345,10 +345,13 @@ namespace UnityEditor.Rendering.HighDefinition
 					{
 						height += Styles.defaultLineSpace * (m_OverrideMaterial.objectReferenceValue != null ? m_MaterialLines : 1);
 						var mat = m_OverrideMaterial.objectReferenceValue as Material;
-						if (m_IsHDRPShader.boolValue || isUnlitShader)
-							height += Styles.defaultLineSpace; // help box
-						else
-							height += m_ShaderPassesList.GetHeight(); // shader passes list
+
+						// Shader Passes currently disabled
+						// if (m_IsHDRPShader.boolValue || isUnlitShader)
+						// 	height += Styles.defaultLineSpace; // help box
+						// else
+						// 	height += m_ShaderPassesList.GetHeight(); // shader passes list
+
 						height += Styles.defaultLineSpace; // sorting criteria;
 					}
 				}

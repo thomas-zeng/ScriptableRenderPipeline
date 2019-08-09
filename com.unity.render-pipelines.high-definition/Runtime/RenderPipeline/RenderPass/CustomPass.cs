@@ -41,17 +41,21 @@ namespace UnityEngine.Rendering.HighDefinition
     {
         public enum CustomPassRenderQueueType
         {
-            Opaque = HDRenderQueue.RenderQueueType.Opaque,
-            AfterPostProcessOpaque = HDRenderQueue.RenderQueueType.AfterPostProcessOpaque,
-            PreRefraction = HDRenderQueue.RenderQueueType.PreRefraction,
-            Transparent = HDRenderQueue.RenderQueueType.Transparent,
-            LowTransparent = HDRenderQueue.RenderQueueType.LowTransparent,
-            AfterPostprocessTransparent = HDRenderQueue.RenderQueueType.AfterPostprocessTransparent,
-            All = -1,
+            OpaqueNoAlphaTest,
+            OpaqueAlphaTest,
+            AllOpaque,
+            AfterPostProcessOpaque,
+            PreRefraction,
+            Transparent,
+            LowTransparent,
+            AllTransparent,
+            AllTransparentWithLowRes,
+            AfterPostProcessTransparent,
+            All,
         }
 
         [System.Serializable]
-        public class CustomPassSettings
+        internal class CustomPassSettings
         {
             public string                   name = "Custom Pass";
             public bool                     enabled = true;
@@ -67,8 +71,8 @@ namespace UnityEngine.Rendering.HighDefinition
             public bool             passFoldout;
 
             //Filter settings
-            public CustomPassRenderQueueType    renderQueueType = CustomPassRenderQueueType.Opaque;
-            public string[]                     passNames;
+            public CustomPassRenderQueueType    renderQueueType = CustomPassRenderQueueType.AllOpaque;
+            public string[]                     passNames = new string[1] { "Forward" };
             public LayerMask                    layerMask = -1;
             public SortingCriteria              sortingCriteria = SortingCriteria.CommonOpaque;
 
@@ -80,10 +84,73 @@ namespace UnityEngine.Rendering.HighDefinition
             public Material         fullscreenPassMaterial;
         }
 
+        static List<ShaderTagId> m_HDRPShaderTags;
+        static List<ShaderTagId> hdrpShaderTags
+        {
+            get
+            {
+                if (m_HDRPShaderTags == null)
+                {
+                    m_HDRPShaderTags = new List<ShaderTagId>() {
+                        HDShaderPassNames.s_ForwardName,
+                        HDShaderPassNames.s_ForwardOnlyName,        // HD Unlit shader
+                        HDShaderPassNames.s_SRPDefaultUnlitName,    // Cross SRP Unlit shader
+                    };
+                }
+                return m_HDRPShaderTags;
+            }
+        }
+
         [SerializeField]
         internal CustomPassSettings settings = new CustomPassSettings();
 
-        // TODO: static factory to create CustomPass (common settings in parameter)
+        /// <summary>
+        /// Create a custom pass to execute a fullscreen pass
+        /// </summary>
+        /// <param name="fullScreenMaterial"></param>
+        /// <param name="targetColorBuffer"></param>
+        /// <param name="targetDepthBuffer"></param>
+        /// <returns></returns>
+        public static CustomPass CreateFullScreenPass(Material fullScreenMaterial, CustomPassTargetBuffer targetColorBuffer = CustomPassTargetBuffer.Camera,
+            CustomPassTargetBuffer targetDepthBuffer = CustomPassTargetBuffer.Camera)
+        {
+            var pass = ScriptableObject.CreateInstance<CustomPass>();
+            pass.settings.type = CustomPassType.FullScreen;
+            pass.settings.targetColorBuffer = targetColorBuffer;
+            pass.settings.targetDepthBuffer = targetDepthBuffer;
+            pass.settings.fullscreenPassMaterial = fullScreenMaterial;
+
+            return pass;
+        }
+
+        /// <summary>
+        /// Create a Custom Pass to render objects
+        /// </summary>
+        /// <param name="queue"></param>
+        /// <param name="mask"></param>
+        /// <param name="overrideMaterial"></param>
+        /// <param name="overrideMaterialPassIndex"></param>
+        /// <param name="sorting"></param>
+        /// <param name="clearFlags"></param>
+        /// <param name="targetColorBuffer"></param>
+        /// <param name="targetDepthBuffer"></param>
+        /// <returns></returns>
+        public static CustomPass CreateFullScreenPass(CustomPassRenderQueueType queue, LayerMask mask,
+            Material overrideMaterial, int overrideMaterialPassIndex = 0, SortingCriteria sorting = SortingCriteria.CommonOpaque,
+            ClearFlag clearFlags = ClearFlag.None, CustomPassTargetBuffer targetColorBuffer = CustomPassTargetBuffer.Camera,
+            CustomPassTargetBuffer targetDepthBuffer = CustomPassTargetBuffer.Camera)
+        {
+            var pass = ScriptableObject.CreateInstance<CustomPass>();
+            pass.settings.type = CustomPassType.Renderers;
+            pass.settings.overrideMaterial = overrideMaterial;
+            pass.settings.overrideMaterialPassIndex = overrideMaterialPassIndex;
+            pass.settings.sortingCriteria = sorting;
+            pass.settings.clearFlags = clearFlags;
+            pass.settings.targetColorBuffer = targetColorBuffer;
+            pass.settings.targetDepthBuffer = targetDepthBuffer;
+
+            return pass;
+        }
 
         internal void ExecuteInternal(ScriptableRenderContext renderContext, CommandBuffer cmd, HDCamera camera, CullingResults cullingResult, RTHandle cameraColorBuffer, RTHandle cameraDepthBuffer, RTHandle customColorBuffer, RTHandle customDepthBuffer)
         {
@@ -115,7 +182,31 @@ namespace UnityEngine.Rendering.HighDefinition
             if (settings.type == CustomPassType.Renderers)
                 ExecuteRenderers(renderContext, cmd, camera, cullingResult);
             else
-                ExecuteFullScreen(cmd);
+                ExecuteFullScreen(cmd, settings.fullscreenPassMaterial);
+        }
+
+        /// <summary>
+        /// Returns the render queue range associated with the custom render queue type
+        /// </summary>
+        /// <returns></returns>
+        protected RenderQueueRange GetRenderQueueRange(CustomPassRenderQueueType type)
+        {
+            switch (type)
+            {
+                case CustomPassRenderQueueType.OpaqueNoAlphaTest: return HDRenderQueue.k_RenderQueue_OpaqueNoAlphaTest;
+                case CustomPassRenderQueueType.OpaqueAlphaTest: return HDRenderQueue.k_RenderQueue_OpaqueAlphaTest;
+                case CustomPassRenderQueueType.AllOpaque: return HDRenderQueue.k_RenderQueue_AllOpaque;
+                case CustomPassRenderQueueType.AfterPostProcessOpaque: return HDRenderQueue.k_RenderQueue_AfterPostProcessOpaque;
+                case CustomPassRenderQueueType.PreRefraction: return HDRenderQueue.k_RenderQueue_PreRefraction;
+                case CustomPassRenderQueueType.Transparent: return HDRenderQueue.k_RenderQueue_Transparent;
+                case CustomPassRenderQueueType.LowTransparent: return HDRenderQueue.k_RenderQueue_LowTransparent;
+                case CustomPassRenderQueueType.AllTransparent: return HDRenderQueue.k_RenderQueue_AllTransparent;
+                case CustomPassRenderQueueType.AllTransparentWithLowRes: return HDRenderQueue.k_RenderQueue_AllTransparentWithLowRes;
+                case CustomPassRenderQueueType.AfterPostProcessTransparent: return HDRenderQueue.k_RenderQueue_AfterPostProcessTransparent;
+                case CustomPassRenderQueueType.All:
+                default:
+                    return HDRenderQueue.k_RenderQueue_All;
+            }
         }
 
         /// <summary>
@@ -127,22 +218,23 @@ namespace UnityEngine.Rendering.HighDefinition
         /// <param name="cullResults"></param>
         protected void ExecuteRenderers(ScriptableRenderContext renderContext, CommandBuffer cmd, HDCamera hdCamera, CullingResults cullResults)
         {
-            ShaderTagId[] unlitShaderTags = {
-                HDShaderPassNames.s_ForwardName,
-                HDShaderPassNames.s_ForwardOnlyName,        // HD Unlit shader
-                HDShaderPassNames.s_SRPDefaultUnlitName     // Cross SRP Unlit shader
-            };
+            ShaderTagId[] shaderPasses = new ShaderTagId[hdrpShaderTags.Count + ((settings.overrideMaterial != null) ? 1 : 0)];
+            System.Array.Copy(hdrpShaderTags.ToArray(), shaderPasses, hdrpShaderTags.Count);
+            if (settings.overrideMaterial != null)
+            {
+                shaderPasses[hdrpShaderTags.Count] = new ShaderTagId(settings.overrideMaterial.GetPassName(settings.overrideMaterialPassIndex));
+            }
 
-            ShaderTagId[] shaderPasses = new ShaderTagId[settings.passNames.Length];
-            for (int i = 0; i < settings.passNames.Length; i++)
-                shaderPasses[i] = new ShaderTagId(settings.passNames[i]);
- 
-            var renderQueueType = (HDRenderQueue.RenderQueueType)settings.renderQueueType;
+            if (shaderPasses.Length == 0)
+            {
+                Debug.LogWarning("Attempt to call DrawRenderers with an empty shader passes. Skipping the call to avoid errors");
+                return;
+            }
 
-            var result = new RendererListDesc(settings.isHDRPShader ? unlitShaderTags : shaderPasses, cullResults, hdCamera.camera)
+            var result = new RendererListDesc(shaderPasses, cullResults, hdCamera.camera)
             {
                 rendererConfiguration = PerObjectData.None,
-                renderQueueRange = HDRenderQueue.GetRange(renderQueueType),
+                renderQueueRange = GetRenderQueueRange(settings.renderQueueType),
                 sortingCriteria = settings.sortingCriteria,
                 excludeObjectMotionVectors = true,
                 overrideMaterial = settings.overrideMaterial,
@@ -157,11 +249,11 @@ namespace UnityEngine.Rendering.HighDefinition
         /// Execute the pass with the fullscreen setup
         /// </summary>
         /// <param name="cmd"></param>
-        protected void ExecuteFullScreen(CommandBuffer cmd)
+        protected void ExecuteFullScreen(CommandBuffer cmd, Material fullScreenMaterial)
         {
-            if (settings.fullscreenPassMaterial != null)
+            if (fullScreenMaterial != null)
             {
-                CoreUtils.DrawFullScreen(cmd, settings.fullscreenPassMaterial, (MaterialPropertyBlock)null);
+                CoreUtils.DrawFullScreen(cmd, fullScreenMaterial, (MaterialPropertyBlock)null);
             }
         }
     }
