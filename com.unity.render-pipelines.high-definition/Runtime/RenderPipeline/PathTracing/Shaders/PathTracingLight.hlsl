@@ -4,7 +4,7 @@
 // Supports rect area lights only for the moment
 class LightList
 {
-    void init(float3 position, BuiltinData builtinData)
+    void Init(float3 position, BuiltinData builtinData)
     {
         // Initialize count to 0
         count = 0;
@@ -49,14 +49,14 @@ class LightList
     #endif
 };
 
-LightList createLightList(float3 position, BuiltinData builtinData)
+LightList CreateLightList(float3 position, BuiltinData builtinData)
 {
     LightList list;
-    list.init(position, builtinData);
+    list.Init(position, builtinData);
     return list;
 }
 
-bool sampleLights(float2 inputSample,
+bool SampleLights(float2 inputSample,
                   LightList lightList,
                   float3 position,
                   float3 normal,
@@ -93,14 +93,14 @@ bool sampleLights(float2 inputSample,
         return false;
 
     float lightArea = length(cross(lightData.size.x * lightData.right, lightData.size.y * lightData.up));
-    pdf = sqr(dist) / (lightArea * cosTheta * lightList.count);
+    pdf = Sqr(dist) / (lightArea * cosTheta * lightList.count);
 
     value = lightData.color;
 
     return true;
 }
 
-void evaluateLights(LightList lightList,
+void EvaluateLights(LightList lightList,
                     RayDesc rayDescriptor,
                     BuiltinData builtinData,
                     out float3 value,
@@ -123,13 +123,13 @@ void evaluateLights(LightList lightList,
             float3 hitVec = rayDescriptor.Origin + t * rayDescriptor.Direction - lightCenter;
 
             // Then check if we are within the rectangle bounds
-            if (2.0 * abs(dot(hitVec, lightData.right) / length2(lightData.right)) < lightData.size.x &&
-                2.0 * abs(dot(hitVec, lightData.up) / length2(lightData.up)) < lightData.size.y)
+            if (2.0 * abs(dot(hitVec, lightData.right) / Length2(lightData.right)) < lightData.size.x &&
+                2.0 * abs(dot(hitVec, lightData.up) / Length2(lightData.up)) < lightData.size.y)
             {
                 value += lightData.color;
 
                 float lightArea = length(cross(lightData.size.x * lightData.right, lightData.size.y * lightData.up));
-                pdf += sqr(t) / (lightArea * cosTheta);
+                pdf += Sqr(t) / (lightArea * cosTheta);
             }
         }
     }

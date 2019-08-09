@@ -1,6 +1,6 @@
 // FIXME: these sample/evaluate functions will be refactored when introducing transmission (BRDF/BTDF)
 
-bool sampleGGX(float2 inputSample,
+bool SampleGGX(float2 inputSample,
                float3x3 localToWorld,
                float3 incomingDir,
                BSDFData bsdfData,
@@ -29,7 +29,7 @@ bool sampleGGX(float2 inputSample,
     return true;
 }
 
-void evaluateGGX(float3x3 localToWorld,
+void EvaluateGGX(float3x3 localToWorld,
                  float3 incomingDir,
                  float3 outgoingDir,
                  BSDFData bsdfData,
@@ -56,7 +56,7 @@ void evaluateGGX(float3x3 localToWorld,
     value = F * D * V * NdotL;
 }
 
-bool sampleLambert(float2 inputSample,
+bool SampleLambert(float2 inputSample,
                    float3 normal,
                    BSDFData bsdfData,
                out float3 outgoingDir,
@@ -74,7 +74,7 @@ bool sampleLambert(float2 inputSample,
     return true;
 }
 
-void evaluateLambert(float3 normal,
+void EvaluateLambert(float3 normal,
                      float3 outgoingDir,
                      BSDFData bsdfData,
                  out float3 value,
@@ -95,14 +95,14 @@ struct MaterialResult
 // FIXME: WIP, only partial support of Lit
 class MaterialLit
 {
-    bool init(SurfaceData surfaceData, BSDFData bsdfData, float3 V)
+    bool Init(SurfaceData surfaceData, BSDFData bsdfData, float3 V)
     {
-        float NdotV = dot(surfaceData.normalWS, V);
-        float F = F_Schlick(bsdfData.fresnel0, NdotV);
+        float  NdotV = dot(surfaceData.normalWS, V);
+        float3 F = F_Schlick(bsdfData.fresnel0, NdotV);
 
         // If N.V < 0 (can happen with normal mapping) we want to avoid spec sampling
-        _specProb = NdotV > 0.001 ? luminance(F) : 0.0;
-        _diffProb = luminance(bsdfData.diffuseColor);
+        _specProb = NdotV > 0.001 ? Luminance(F) : 0.0;
+        _diffProb = Luminance(bsdfData.diffuseColor);
         float probDenom = _diffProb + _specProb;
 
         // If we are basically black, no need to compute anything with this material
@@ -124,27 +124,27 @@ class MaterialLit
         return true;
     }
 
-    bool sample(float2 inputSample, out float3 sampleDir, out MaterialResult result)
+    bool Sample(float2 inputSample, out float3 sampleDir, out MaterialResult result)
     {
         if (inputSample.x < _specProb)
         {
             // Rescale the sample
             inputSample.x /= _specProb;
 
-            if (!sampleGGX(inputSample, _localToWorld, _V, _bsdfData, sampleDir, result.specValue, result.specPdf))
+            if (!SampleGGX(inputSample, _localToWorld, _V, _bsdfData, sampleDir, result.specValue, result.specPdf))
                 return false;
 
-            evaluateLambert(_surfaceData.normalWS, sampleDir, _bsdfData, result.diffValue, result.diffPdf);
+            EvaluateLambert(_surfaceData.normalWS, sampleDir, _bsdfData, result.diffValue, result.diffPdf);
         }
         else
         {
             // Rescale the sample
             inputSample.x = (inputSample.x - _specProb) / _diffProb;
 
-            if (!sampleLambert(inputSample, _surfaceData.normalWS, _bsdfData, sampleDir, result.diffValue, result.diffPdf))
+            if (!SampleLambert(inputSample, _surfaceData.normalWS, _bsdfData, sampleDir, result.diffValue, result.diffPdf))
                 return false;
 
-            evaluateGGX(_localToWorld, _V, sampleDir, _bsdfData, result.specValue, result.specPdf);
+            EvaluateGGX(_localToWorld, _V, sampleDir, _bsdfData, result.specValue, result.specPdf);
         }
 
         result.diffPdf *= _diffProb;
@@ -153,10 +153,10 @@ class MaterialLit
         return true;
     }
 
-    void evaluate(float3 sampleDir, out MaterialResult result)
+    void Evaluate(float3 sampleDir, out MaterialResult result)
     {
-        evaluateLambert(_surfaceData.normalWS, sampleDir, _bsdfData, result.diffValue, result.diffPdf);
-        evaluateGGX(_localToWorld, _V, sampleDir, _bsdfData, result.specValue, result.specPdf);
+        EvaluateLambert(_surfaceData.normalWS, sampleDir, _bsdfData, result.diffValue, result.diffPdf);
+        EvaluateGGX(_localToWorld, _V, sampleDir, _bsdfData, result.specValue, result.specPdf);
         result.diffPdf *= _diffProb;
         result.specPdf *= _specProb;
     }

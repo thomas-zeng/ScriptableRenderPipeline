@@ -10,7 +10,7 @@
 
 #define RUSSIAN_ROULETTE_THRESHOLD 0.01
 
-bool russianRouletteTest(float value, float rand, out float factor)
+bool RussianRouletteTest(float value, float rand, out float factor)
 {
     if (value >= RUSSIAN_ROULETTE_THRESHOLD)
     {
@@ -25,9 +25,9 @@ bool russianRouletteTest(float value, float rand, out float factor)
     return true;
 }
 
-float powerHeuristic(float f, float b)
+float PowerHeuristic(float f, float b)
 {
-    return sqr(f) / (sqr(f) + sqr(b));
+    return Sqr(f) / (Sqr(f) + Sqr(b));
 }
 
 // Generic function that handles the reflection code
@@ -78,8 +78,8 @@ void ClosestHit(inout RayIntersection rayIntersection : SV_RayPayload, Attribute
 
     // Generate the new sample (following values of the sequence)
     float2 inputSample = 0.0;
-    inputSample.x = getSample(_RaytracingFrameIndex, 4 * currentDepth, rayIntersection.scramblingValue.x);
-    inputSample.y = getSample(_RaytracingFrameIndex, 4 * currentDepth + 1, rayIntersection.scramblingValue.y);
+    inputSample.x = GetSample(_RaytracingFrameIndex, 4 * currentDepth, rayIntersection.scramblingValue.x);
+    inputSample.y = GetSample(_RaytracingFrameIndex, 4 * currentDepth + 1, rayIntersection.scramblingValue.y);
 
     // Get current path throughput
     float3 pathThroughput = rayIntersection.color;
@@ -90,11 +90,11 @@ void ClosestHit(inout RayIntersection rayIntersection : SV_RayPayload, Attribute
     // Initialize our material
     MaterialLit mtl;
 
-    if (!mtl.init(surfaceData, bsdfData, -WorldRayDirection()))
+    if (!mtl.Init(surfaceData, bsdfData, -WorldRayDirection()))
         return;
 
     // Create the list of active lights
-    LightList lightList = createLightList(position, builtinData);
+    LightList lightList = CreateLightList(position, builtinData);
 
     // Bunch of variables common to material and light sampling
     float pdf;
@@ -108,7 +108,7 @@ void ClosestHit(inout RayIntersection rayIntersection : SV_RayPayload, Attribute
     RayIntersection nextRayIntersection;
 
     // Material sampling
-    if (mtl.sample(inputSample, rayDescriptor.Direction, mtlResult))
+    if (mtl.Sample(inputSample, rayDescriptor.Direction, mtlResult))
     {
         // Compute overall material value and pdf
         pdf = mtlResult.diffPdf + mtlResult.specPdf;
@@ -116,11 +116,11 @@ void ClosestHit(inout RayIntersection rayIntersection : SV_RayPayload, Attribute
 
         // Apply Russian roulette to our path
         pathThroughput *= value;
-        float russianRouletteValue = average(pathThroughput);
+        float russianRouletteValue = Average(pathThroughput);
         float russianRouletteFactor = 1.0;
 
-        float rand = getSample(_RaytracingFrameIndex, 4 * currentDepth + 2, rayIntersection.scramblingValue.x);
-        if (russianRouletteTest(russianRouletteValue, rand, russianRouletteFactor))
+        float rand = GetSample(_RaytracingFrameIndex, 4 * currentDepth + 2, rayIntersection.scramblingValue.x);
+        if (RussianRouletteTest(russianRouletteValue, rand, russianRouletteFactor))
         {
             rayDescriptor.TMax = _RaytracingRayMaxLength;
 
@@ -144,20 +144,20 @@ void ClosestHit(inout RayIntersection rayIntersection : SV_RayPayload, Attribute
             rayDescriptor.TMax = nextRayIntersection.t + _RaytracingRayBias;
             float3 lightValue;
             float lightPdf;
-            evaluateLights(lightList, rayDescriptor, builtinData, lightValue, lightPdf);
+            EvaluateLights(lightList, rayDescriptor, builtinData, lightValue, lightPdf);
 
-            float misWeight = powerHeuristic(pdf, lightPdf);
+            float misWeight = PowerHeuristic(pdf, lightPdf);
             rayIntersection.color += value * russianRouletteFactor * (lightValue * misWeight + nextRayIntersection.color);
         }
     }
 
     // Light sampling
-    if (sampleLights(inputSample, lightList, rayDescriptor.Origin, surfaceData.normalWS, rayDescriptor.Direction, value, pdf, rayDescriptor.TMax))
+    if (SampleLights(inputSample, lightList, rayDescriptor.Origin, surfaceData.normalWS, rayDescriptor.Direction, value, pdf, rayDescriptor.TMax))
     {
-        mtl.evaluate(rayDescriptor.Direction, mtlResult);
+        mtl.Evaluate(rayDescriptor.Direction, mtlResult);
 
         value *= (mtlResult.diffValue + mtlResult.specValue) / pdf;
-        if (luminance(value) > 0.001)
+        if (Luminance(value) > 0.001)
         {
             // Shoot a transmission ray (to mark it as such, purposedly set remaining depth to an invalid value)
             nextRayIntersection.remainingDepth = _RaytracingMaxRecursion + 1;
@@ -166,14 +166,14 @@ void ClosestHit(inout RayIntersection rayIntersection : SV_RayPayload, Attribute
 
             if (nextRayIntersection.t >= rayDescriptor.TMax)
             {
-                float misWeight = powerHeuristic(pdf, mtlResult.diffPdf + mtlResult.specPdf);
+                float misWeight = PowerHeuristic(pdf, mtlResult.diffPdf + mtlResult.specPdf);
                 rayIntersection.color += value * misWeight;
             }
         }
     }
 
     // Bias the result (making it too dark), but reduces fireflies a lot
-    float intensity = luminance(rayIntersection.color);
+    float intensity = Luminance(rayIntersection.color);
     if (intensity > _RaytracingIntensityClamp)
         rayIntersection.color *= _RaytracingIntensityClamp / intensity;
 }
@@ -209,5 +209,4 @@ void AnyHit(inout RayIntersection rayIntersection : SV_RayPayload, AttributeData
     // If the depth information is marked as invalid, we are shooting a transmission ray
     if (rayIntersection.remainingDepth > _RaytracingMaxRecursion)
         AcceptHitAndEndSearch();
-
 }

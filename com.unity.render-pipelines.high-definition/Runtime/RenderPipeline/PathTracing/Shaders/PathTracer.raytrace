@@ -8,6 +8,7 @@
 #define SHADER_TARGET 50
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Builtin/BuiltinData.hlsl"
 
@@ -26,7 +27,7 @@ float4x4 _PixelCoordToViewDirWS;
 RWTexture2D<float4> _CameraColorTextureRW;
 RWTexture2D<float4> _AccumulatedFrameTexture;
 
-void addConvergenceCue(uint2 pixelCoord, uint sampleCount, inout float3 color)
+void AddConvergenceCue(uint2 pixelCoord, uint sampleCount, inout float3 color)
 {
 	uint width, height;
 	_CameraColorTextureRW.GetDimensions(width, height);
@@ -34,7 +35,7 @@ void addConvergenceCue(uint2 pixelCoord, uint sampleCount, inout float3 color)
 	// Change color only in a region corresponding to a progress bar, on the bottom 1% of the screen
 	if (pixelCoord.y < 0.01 * height && (float)pixelCoord.x / width <= (float)sampleCount / (_RaytracingNumSamples - 1))
 	{
-		float lum = luminance(color);
+		float lum = Luminance(color);
 
 		if (lum > 1.0)
 		{
@@ -77,12 +78,12 @@ void RayGen()
     }
 
     // Get the scramblingValue of this pixel
-    uint2 scramblingValue = getScramblingValue(currentPixelCoord);
+    uint2 scramblingValue = GetScramblingValue(currentPixelCoord);
 
     // Get jittered pixel coordinates
     float3 jitteredPixelCoord = float3(currentPixelCoord, 1.0);
-    jitteredPixelCoord.x += getSample(_RaytracingFrameIndex, 254, scramblingValue.x);
-    jitteredPixelCoord.y += getSample(_RaytracingFrameIndex, 255, scramblingValue.y);
+    jitteredPixelCoord.x += GetSample(_RaytracingFrameIndex, 254, scramblingValue.x);
+    jitteredPixelCoord.y += GetSample(_RaytracingFrameIndex, 255, scramblingValue.y);
 
     // Compute the ray direction, from those coordinates
 	float3 directionWS = -normalize(mul(jitteredPixelCoord, (float3x3)_PixelCoordToViewDirWS));
@@ -120,12 +121,12 @@ void RayGen()
     else
     {
     	sampleCount++;
-    	rayIntersection.color = (_AccumulatedFrameTexture[currentPixelCoord].xyz * (sampleCount - 1) + rayIntersection.color) / sampleCount;
+    	//rayIntersection.color = (_AccumulatedFrameTexture[currentPixelCoord].xyz * (sampleCount - 1) + rayIntersection.color) / sampleCount;
     }
    	_AccumulatedFrameTexture[currentPixelCoord] = float4(rayIntersection.color, sampleCount);
 
 	// Add a little convergence cue to our result (FIXME: definitely not the right way to do it!!)
-	addConvergenceCue(currentPixelCoord, sampleCount, rayIntersection.color);
+	AddConvergenceCue(currentPixelCoord, sampleCount, rayIntersection.color);
 
    	_CameraColorTextureRW[currentPixelCoord] = float4(rayIntersection.color, 1.0);
 }

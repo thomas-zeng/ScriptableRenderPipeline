@@ -3,12 +3,12 @@
 
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/Raytracing/Shaders/RaytracingSampling.hlsl"
 
-uint2 getScramblingValue(uint2 pixelCoord)
+uint2 GetScramblingValue(uint2 pixelCoord)
 {
 	return ScramblingValue(pixelCoord.x, pixelCoord.y);
 }
 
-float getSample(uint index, uint dim, uint scrambling = 0)
+float GetSample(uint index, uint dim, uint scrambling = 0)
 {
 	return GetRaytracingNoiseSample(index, dim, scrambling);
 }
