@@ -1584,8 +1584,9 @@ namespace UnityEngine.Rendering.HighDefinition
                             renderRequest.cullingResults.decalCullResults?.Clear();
                             GenericPool<HDCullingResults>.Release(renderRequest.cullingResults);
                         }
+                        if(renderRequest.hdCamera.xr.enabled)
+                            m_XRSystem.RenderMirrorView(cmd);
 
-                        m_XRSystem.RenderMirrorView(cmd);
                         renderContext.ExecuteCommandBuffer(cmd);
 
                         CommandBufferPool.Release(cmd);
@@ -2143,6 +2144,7 @@ namespace UnityEngine.Rendering.HighDefinition
             public int                      sliceIndex;
             public Rect                     viewport;
             public Material                 blitMaterial;
+            public int targetSlice;
         }
 
         internal RTHandle GetExposureTexture(HDCamera hdCamera) =>
@@ -2158,6 +2160,7 @@ namespace UnityEngine.Rendering.HighDefinition
             parameters.flip = hdCamera.flipYMode == HDAdditionalCameraData.FlipYMode.ForceFlipY || hdCamera.isMainGameView;
             parameters.blitMaterial = HDUtils.GetBlitMaterial(TextureXR.useTexArray ? TextureDimension.Tex2DArray : TextureDimension.Tex2D, singleSlice: parameters.sliceIndex >= 0);
             parameters.viewport = hdCamera.finalViewport;
+            parameters.targetSlice = hdCamera.xr.enabled? hdCamera.xr.GetDepthSlice(0) : 0;
 
             return parameters;
         }
@@ -2178,7 +2181,7 @@ namespace UnityEngine.Rendering.HighDefinition
             propertyBlock.SetVector(HDShaderIDs._BlitScaleBias, scaleBias);
             propertyBlock.SetFloat(HDShaderIDs._BlitMipLevel, 0);
             propertyBlock.SetInt(HDShaderIDs._BlitTexArraySlice, parameters.sliceIndex);
-            HDUtils.DrawFullScreen(cmd, parameters.viewport, parameters.blitMaterial, destination, propertyBlock, 0);
+            HDUtils.DrawFullScreen(cmd, parameters.viewport, parameters.blitMaterial, destination, propertyBlock, 0, parameters.targetSlice);
         }
 
         void SetupCameraProperties(HDCamera hdCamera, ScriptableRenderContext renderContext, CommandBuffer cmd)

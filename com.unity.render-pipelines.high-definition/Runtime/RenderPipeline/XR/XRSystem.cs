@@ -244,6 +244,7 @@ namespace UnityEngine.Rendering.HighDefinition
 #if USE_XR_SDK
         bool CanUseInstancing(Camera camera, XRDisplaySubsystem.XRRenderPass renderPass)
         {
+            return false;
             if (renderPass.renderTargetDesc.dimension != TextureDimension.Tex2DArray)
                 return false;
 
@@ -294,7 +295,7 @@ namespace UnityEngine.Rendering.HighDefinition
                             mirrorViewMaterialProperty.SetInt(HDShaderIDs._BlitTexArraySlice, blitParam.srcTexArraySlice);
 
                             int shaderPass = (blitParam.srcTex.dimension == TextureDimension.Tex2DArray) ? 1 : 0;
-                            cmd.DrawProcedural(Matrix4x4.identity, mirrorViewMaterial, shaderPass, MeshTopology.Triangles, 3, 1, mirrorViewMaterialProperty);
+                            cmd.DrawProcedural(Matrix4x4.identity, mirrorViewMaterial, shaderPass, MeshTopology.Quads, 4, 1, mirrorViewMaterialProperty);
                         }
                     }
                 }

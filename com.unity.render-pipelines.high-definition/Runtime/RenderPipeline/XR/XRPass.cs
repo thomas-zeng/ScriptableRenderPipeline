@@ -24,6 +24,7 @@ namespace UnityEngine.Rendering.HighDefinition
         internal readonly Rect viewport;
         internal readonly Mesh occlusionMesh;
         internal readonly Camera.StereoscopicEye legacyStereoEye;
+        internal readonly int depthSlice;
 
         internal XRView(Camera camera, Camera.StereoscopicEye eye)
         {
@@ -32,6 +33,7 @@ namespace UnityEngine.Rendering.HighDefinition
             viewport = camera.pixelRect;
             occlusionMesh = null;
             legacyStereoEye = eye;
+            depthSlice = 0;
         }
 
         internal XRView(Matrix4x4 proj, Matrix4x4 view, Rect vp)
@@ -41,6 +43,7 @@ namespace UnityEngine.Rendering.HighDefinition
             viewport = vp;
             occlusionMesh = null;
             legacyStereoEye = (Camera.StereoscopicEye)(-1);
+            depthSlice = 0;
         }
 
 #if USE_XR_SDK
@@ -51,7 +54,7 @@ namespace UnityEngine.Rendering.HighDefinition
             viewport = renderParameter.viewport;
             occlusionMesh = renderParameter.occlusionMesh;
             legacyStereoEye = (Camera.StereoscopicEye)(-1);
-
+            depthSlice = renderParameter.textureArraySlice;
             // Convert viewport from normalized to screen space
             viewport.x      *= renderPass.renderTargetDesc.width;
             viewport.width  *= renderPass.renderTargetDesc.width;
@@ -81,6 +84,7 @@ namespace UnityEngine.Rendering.HighDefinition
         internal Matrix4x4 GetProjMatrix(int viewIndex = 0) { return views[viewIndex].projMatrix; }
         internal Matrix4x4 GetViewMatrix(int viewIndex = 0) { return views[viewIndex].viewMatrix; }
         internal Rect GetViewport(int viewIndex = 0)        { return views[viewIndex].viewport; }
+        internal int GetDepthSlice(int viewIndex = 0) { return views[viewIndex].depthSlice; }
 
         // Combined projection and view matrices for culling
         internal ScriptableCullingParameters cullingParams { get; private set; }

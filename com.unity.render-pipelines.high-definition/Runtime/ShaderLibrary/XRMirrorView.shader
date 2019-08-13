@@ -15,10 +15,10 @@ Shader "Hidden/HDRP/XRMirrorView"
             ZWrite Off ZTest Always Blend Off Cull Off
 
             HLSLPROGRAM
-                #pragma vertex Vert
+                #pragma vertex VertQuad
                 #pragma fragment FragBilinear
 
-                #define DISABLE_TEXTURE2D_X_ARRAY 1
+                #define DISABLE_TEXTURE2D_X_ARRAY
                 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/XRMirrorView.hlsl"
             ENDHLSL
         }
@@ -29,9 +29,10 @@ Shader "Hidden/HDRP/XRMirrorView"
             ZWrite Off ZTest Always Blend Off Cull Off
 
             HLSLPROGRAM
-                #pragma vertex Vert
+                #pragma vertex VertQuad
                 #pragma fragment FragBilinear
 
+                #undef DISABLE_TEXTURE2D_X_ARRAY
                 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/XRMirrorView.hlsl"
             ENDHLSL
         }
